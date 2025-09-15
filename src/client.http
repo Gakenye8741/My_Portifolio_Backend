@@ -1,0 +1,31 @@
+###
+#Creating User
+POST http://localhost:5000/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "Allekiii",
+  "fullName": "Alex mwikideu",
+  "email": "chairman@club.com",
+  "password": "password123",
+  "role": "Chairman"
+}
+
+###
+POST  http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+    "email":"brayogakenye1254w23@gmail.com",
+    "password": "12345678"
+}
+
+###
+GET http://localhost:5000/api/Users/AllUsers
+
+
+###
+GET http://localhost:5000/api/Meetings/AllMeetings
+
+###
+GET http://localhost:5000/api/Attendees/AllAttendees
