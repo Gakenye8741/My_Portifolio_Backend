@@ -10,7 +10,7 @@
     "gen": "drizzle-kit generate",
     "migrate": "tsx src/drizzle/migrate.ts",
     "studio": "drizzle-kit studio",
-    "push": "drizzle-kit generate && tsx src/drizzle/migrate.ts && tsx src/drizzle/seed.ts",
+    "push": "drizzle-kit generate && drizzle-kit push",
     "seed": "tsx src/drizzle/seed.ts",
     "postinstall": "tsc"
   },
