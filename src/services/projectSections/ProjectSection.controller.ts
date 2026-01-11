@@ -20,7 +20,8 @@ export const createSection: RequestHandler = async (req, res) => {
 // ✅ Get all sections for a specific project
 export const getProjectSections: RequestHandler = async (req, res) => {
   try {
-    const { projectId } = req.params;
+    // Fix: Explicitly cast projectId to string for Azure build safety
+    const projectId = req.params.projectId as string;
     const sections = await getSectionsByProjectService(projectId);
     res.status(200).json(sections);
   } catch (error) {
@@ -42,7 +43,8 @@ export const reorderSections: RequestHandler = async (req, res) => {
 // ✅ Update specific section content
 export const updateSection: RequestHandler = async (req, res) => {
   try {
-    const { id } = req.params;
+    // Fix: Explicitly cast id to string for Azure build safety
+    const id = req.params.id as string;
     const updated = await updateSectionService(id, req.body);
     if (!updated) {
       res.status(404).json({ error: "Section not found" });
@@ -57,7 +59,8 @@ export const updateSection: RequestHandler = async (req, res) => {
 // ✅ Delete a section
 export const deleteSection: RequestHandler = async (req, res) => {
   try {
-    const { id } = req.params;
+    // Fix: Explicitly cast id to string for Azure build safety
+    const id = req.params.id as string;
     const message = await deleteSectionService(id);
     res.status(200).json({ message });
   } catch (error) {

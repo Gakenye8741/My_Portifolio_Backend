@@ -11,7 +11,8 @@ import {
  */
 export const getProjectTechs: RequestHandler = async (req, res) => {
   try {
-    const { projectId } = req.params;
+    // Cast param to string for type safety
+    const projectId = req.params.projectId as string;
     const techs = await getTechsByProjectService(projectId);
     res.status(200).json(techs);
   } catch (error: any) {
@@ -25,7 +26,8 @@ export const getProjectTechs: RequestHandler = async (req, res) => {
  */
 export const addTechsToProject: RequestHandler = async (req, res) => {
   try {
-    const { projectId } = req.params;
+    // Cast param to string for type safety
+    const projectId = req.params.projectId as string;
     const { technologyIds } = req.body;
 
     if (!Array.isArray(technologyIds)) {
@@ -46,7 +48,8 @@ export const addTechsToProject: RequestHandler = async (req, res) => {
  */
 export const syncProjectTechs: RequestHandler = async (req, res) => {
   try {
-    const { projectId } = req.params;
+    // Cast param to string for type safety
+    const projectId = req.params.projectId as string;
     const { technologyIds } = req.body;
 
     const message = await syncProjectTechsService(projectId, technologyIds);
@@ -61,7 +64,10 @@ export const syncProjectTechs: RequestHandler = async (req, res) => {
  */
 export const removeTechFromProject: RequestHandler = async (req, res) => {
   try {
-    const { projectId, technologyId } = req.params;
+    // Cast params to string for type safety
+    const projectId = req.params.projectId as string;
+    const technologyId = req.params.technologyId as string;
+    
     const message = await removeTechFromProjectService(projectId, technologyId);
     res.status(200).json({ message });
   } catch (error: any) {

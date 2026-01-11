@@ -31,7 +31,8 @@ export const getAllMedia: RequestHandler = async (req, res) => {
 // ✅ Get Single Media by ID
 export const getMediaById: RequestHandler = async (req, res) => {
   try {
-    const { id } = req.params; // String (UUID)
+    // Fix: Explicitly cast the ID param to string for TS compiler
+    const id = req.params.id as string; 
     const asset = await getMediaByIdService(id);
 
     if (!asset) {
@@ -48,7 +49,8 @@ export const getMediaById: RequestHandler = async (req, res) => {
 // ✅ Update Media Metadata
 export const updateMedia: RequestHandler = async (req, res) => {
   try {
-    const { id } = req.params;
+    // Fix: Explicitly cast the ID param to string
+    const id = req.params.id as string;
     const updated = await updateMediaService(id, req.body);
     res.status(200).json({ message: "Media updated successfully", data: updated });
   } catch (error) {
@@ -59,7 +61,8 @@ export const updateMedia: RequestHandler = async (req, res) => {
 // ✅ Delete Media Asset
 export const deleteMedia: RequestHandler = async (req, res) => {
   try {
-    const { id } = req.params;
+    // Fix: Explicitly cast the ID param to string
+    const id = req.params.id as string;
     const result = await deleteMediaService(id);
 
     if (!result.success) {

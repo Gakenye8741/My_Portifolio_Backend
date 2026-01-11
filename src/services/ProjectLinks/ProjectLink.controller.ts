@@ -10,7 +10,8 @@ import {
 // ✅ Get all links for a project
 export const getProjectLinks: RequestHandler = async (req, res) => {
   try {
-    const { projectId } = req.params;
+    // Explicitly cast to string for type safety
+    const projectId = req.params.projectId as string;
     const links = await getLinksByProjectIdService(projectId);
     res.status(200).json(links);
   } catch (error) {
@@ -31,7 +32,8 @@ export const createLink: RequestHandler = async (req, res) => {
 // ✅ Bulk Sync Links (Replace all links for a project)
 export const syncLinks: RequestHandler = async (req, res) => {
   try {
-    const { projectId } = req.params;
+    // Explicitly cast to string for type safety
+    const projectId = req.params.projectId as string;
     // req.body should be an array of links
     const message = await syncProjectLinksService(projectId, req.body);
     res.status(200).json({ message });
@@ -44,7 +46,8 @@ export const syncLinks: RequestHandler = async (req, res) => {
 // ✅ Update a link
 export const updateLink: RequestHandler = async (req, res) => {
   try {
-    const { id } = req.params;
+    // Explicitly cast to string for type safety
+    const id = req.params.id as string;
     const updated = await updateProjectLinkService(id, req.body);
     if (!updated) {
       res.status(404).json({ error: "Link not found" });
@@ -59,7 +62,8 @@ export const updateLink: RequestHandler = async (req, res) => {
 // ✅ Delete a link
 export const deleteLink: RequestHandler = async (req, res) => {
   try {
-    const { id } = req.params;
+    // Explicitly cast to string for type safety
+    const id = req.params.id as string;
     const message = await deleteProjectLinkService(id);
     res.status(200).json({ message });
   } catch (error) {

@@ -46,7 +46,8 @@ export const createTechWithSkill: RequestHandler = async (req, res) => {
  */
 export const updateTechSkill: RequestHandler = async (req, res) => {
   try {
-    const { id } = req.params;
+    // Fix: Explicitly cast id to string for Azure build safety
+    const id = req.params.id as string;
     const updated = await updateTechSkillService(id, req.body);
 
     if (!updated) {
@@ -65,7 +66,8 @@ export const updateTechSkill: RequestHandler = async (req, res) => {
  */
 export const deleteTech: RequestHandler = async (req, res) => {
   try {
-    const { id } = req.params;
+    // Fix: Explicitly cast id to string for Azure build safety
+    const id = req.params.id as string;
     await deleteTechService(id);
     res.status(200).json({ message: "Technology and associated skills deleted ❌" });
   } catch (error: any) {

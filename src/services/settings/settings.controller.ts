@@ -35,7 +35,8 @@ export const getSettings: RequestHandler = async (req, res) => {
  */
 export const getSettingByKey: RequestHandler = async (req, res) => {
   try {
-    const { key } = req.params;
+    // Cast param to string for type safety
+    const key = req.params.key as string;
     const value = await getSettingValueService(key);
     res.status(200).json({ key, value });
   } catch (error: any) {
@@ -81,7 +82,8 @@ export const bulkSaveSettings: RequestHandler = async (req, res) => {
  */
 export const deleteSetting: RequestHandler = async (req, res) => {
   try {
-    const { key } = req.params;
+    // Cast param to string for type safety
+    const key = req.params.key as string;
     const message = await deleteSettingService(key);
     res.status(200).json({ message });
   } catch (error: any) {

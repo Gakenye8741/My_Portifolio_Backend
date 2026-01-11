@@ -25,7 +25,8 @@ export const getAllServices: RequestHandler = async (req, res) => {
  */
 export const getServiceBySlug: RequestHandler = async (req, res) => {
   try {
-    const { slug } = req.params;
+    // Cast param to string for type safety
+    const slug = req.params.slug as string;
     const service = await getServiceBySlugService(slug);
     if (!service) {
       res.status(404).json({ error: "Service not found" });
@@ -56,7 +57,8 @@ export const createService: RequestHandler = async (req, res) => {
  */
 export const updateService: RequestHandler = async (req, res) => {
   try {
-    const { id } = req.params;
+    // Cast param to string for type safety
+    const id = req.params.id as string;
     const updated = await updateServiceInfoService(id, req.body);
     if (!updated) {
       res.status(404).json({ error: "Service not found" });
@@ -74,7 +76,8 @@ export const updateService: RequestHandler = async (req, res) => {
  */
 export const syncServiceTechs: RequestHandler = async (req, res) => {
   try {
-    const { id } = req.params;
+    // Cast param to string for type safety
+    const id = req.params.id as string;
     const { techIds } = req.body;
     const message = await syncServiceTechsService(id, techIds);
     res.status(200).json({ message });
@@ -88,7 +91,8 @@ export const syncServiceTechs: RequestHandler = async (req, res) => {
  */
 export const deleteService: RequestHandler = async (req, res) => {
   try {
-    const { id } = req.params;
+    // Cast param to string for type safety
+    const id = req.params.id as string;
     const message = await deleteServiceService(id);
     res.status(200).json({ message });
   } catch (error: any) {

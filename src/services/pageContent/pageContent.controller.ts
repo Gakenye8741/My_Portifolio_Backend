@@ -12,7 +12,8 @@ import {
  */
 export const getPageContent: RequestHandler = async (req, res) => {
   try {
-    const { pageName } = req.params;
+    // Cast the specific param to string
+    const pageName = req.params.pageName as string;
     const content = await getPageContentService(pageName);
     
     res.status(200).json(content);
@@ -30,7 +31,8 @@ export const getPageContent: RequestHandler = async (req, res) => {
  */
 export const getContentByKey: RequestHandler = async (req, res) => {
   try {
-    const { key } = req.params;
+    // Cast the specific param to string
+    const key = req.params.key as string;
     const content = await getContentByKeyService(key);
     
     if (!content) {
@@ -76,7 +78,8 @@ export const savePageContent: RequestHandler = async (req, res) => {
  */
 export const deleteContent: RequestHandler = async (req, res) => {
   try {
-    const { id } = req.params;
+    // Cast the specific param to string
+    const id = req.params.id as string;
     const message = await deletePageContentService(id);
     res.status(200).json({ message });
   } catch (error: any) {

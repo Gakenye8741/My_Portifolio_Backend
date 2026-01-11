@@ -23,7 +23,8 @@ export const getAllProjects: RequestHandler = async (req, res) => {
 // ✅ Get a project by ID
 export const getProjectById: RequestHandler = async (req, res) => {
   try {
-    const id = req.params.id; // It's already a string (UUID)
+    // Cast to string to satisfy TS compiler for Azure build
+    const id = req.params.id as string; 
     
     // Optional: Basic length check for UUID (standard UUID is 36 chars)
     if (!id || id.length < 30) {
@@ -46,7 +47,8 @@ export const getProjectById: RequestHandler = async (req, res) => {
 // ✅ Get project by Slug
 export const getProjectBySlug: RequestHandler = async (req, res) => {
   try {
-    const slug = req.params.slug;
+    // Cast to string to satisfy TS compiler for Azure build
+    const slug = req.params.slug as string;
     const project = await getProjectBySlugService(slug);
     
     if (!project) {
@@ -66,7 +68,8 @@ export const getProjectBySlug: RequestHandler = async (req, res) => {
 // ✅ Get project with thumbnail details
 export const getProjectWithThumbnail: RequestHandler = async (req, res) => {
   try {
-    const id = req.params.id; 
+    // Cast to string to satisfy TS compiler for Azure build
+    const id = req.params.id as string; 
 
     const project = await getProjectWithThumbnailService(id);
     if (!project) {
@@ -93,7 +96,8 @@ export const createProject: RequestHandler = async (req, res) => {
 // ✅ Update a project
 export const updateProject: RequestHandler = async (req, res) => {
   try {
-    const id = req.params.id;
+    // Cast to string to satisfy TS compiler for Azure build
+    const id = req.params.id as string;
 
     const message = await updateProjectService(id, req.body);
     res.json({ message });
@@ -105,7 +109,8 @@ export const updateProject: RequestHandler = async (req, res) => {
 // ✅ Delete a project
 export const deleteProject: RequestHandler = async (req, res) => {
   try {
-    const id = req.params.id;
+    // Cast to string to satisfy TS compiler for Azure build
+    const id = req.params.id as string;
 
     const message = await deleteProjectService(id);
     res.json({ message });

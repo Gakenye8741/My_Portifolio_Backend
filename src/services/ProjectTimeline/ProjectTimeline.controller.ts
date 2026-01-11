@@ -21,7 +21,8 @@ export const createTimelineEvent: RequestHandler = async (req, res) => {
 // ✅ Get all timeline events for a specific project
 export const getProjectTimeline: RequestHandler = async (req, res) => {
   try {
-    const { projectId } = req.params;
+    // Fix: Explicitly cast projectId to string for type safety
+    const projectId = req.params.projectId as string;
     const timeline = await getTimelineByProjectService(projectId);
     res.status(200).json(timeline);
   } catch (error) {
@@ -32,7 +33,8 @@ export const getProjectTimeline: RequestHandler = async (req, res) => {
 // ✅ Update a specific timeline event
 export const updateTimelineEvent: RequestHandler = async (req, res) => {
   try {
-    const { id } = req.params;
+    // Fix: Explicitly cast id to string for type safety
+    const id = req.params.id as string;
     const updated = await updateTimelineEventService(id, req.body);
     
     if (!updated) {
@@ -49,7 +51,8 @@ export const updateTimelineEvent: RequestHandler = async (req, res) => {
 // ✅ Delete a timeline event
 export const deleteTimelineEvent: RequestHandler = async (req, res) => {
   try {
-    const { id } = req.params;
+    // Fix: Explicitly cast id to string for type safety
+    const id = req.params.id as string;
     const message = await deleteTimelineEventService(id);
     res.status(200).json({ message });
   } catch (error) {
