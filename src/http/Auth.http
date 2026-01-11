@@ -1,0 +1,33 @@
+### Variables
+@baseUrl = http://localhost:5000/api
+
+
+### ✅ Register a New User
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "fullName": "John Doe",
+  "email": "admin@example.com",
+  "password": "SecurePassword123",
+  "role": "admin"
+}
+
+### ✅ Login User
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "SecurePassword123"
+}
+
+### Capture the token from the login response (Rest Client feature)
+@authToken = {{login.response.body.token}}
+
+### ✅ Test Protected Route (Example: Projects)
+# This uses the token captured automatically from the login request above
+GET {{baseUrl}}/projects
+Authorization: Bearer {{authToken}}
+Content-Type: application/json

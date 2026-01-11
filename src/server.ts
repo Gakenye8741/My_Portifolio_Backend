@@ -3,11 +3,17 @@ import dotenv from 'dotenv';
 import { logger } from "./middlewares/logger";
 import authRouter from "./auth/auth.route";
 import cors from 'cors';
-import userRouter from "./services/users/users.routes";
-import meetingRouter from "./services/others/others.route";
-import attendeesRouter from "./services/Attendees/Attendee.route";
-import topicsRouter from "./services/Topics/Topics.route";
-import signaturesRouter from "./services/Signatres/signature.route";
+import { ProjectsRoute } from "./services/Project/Project.Route";
+import { MediaRoute } from "./services/Media Assets/MediaAssests.Route";
+import { ProjectLinkRoute } from "./services/ProjectLinks/ProjectLink.route";
+import { ProjectSectionRoute } from "./services/projectSections/ProjectSection.route";
+import { ProjectTimelineRoute } from "./services/ProjectTimeline/ProjectTimeline.route";
+import { TechSkillsRoute } from "./services/techSkills/techSkills.route";
+import { ServiceRoute } from "./services/Services & Tech Service/services.route";
+import { ProjectTechRoute } from "./services/projectTech/projectTech.route";
+import { SettingsRoute } from "./services/settings/settings.route";
+import { ContentRoute } from "./services/pageContent/pageContent.route";
+
 
 
 dotenv.config();
@@ -26,17 +32,22 @@ app.use(logger)
 
 // Routes
 app.use('/api/auth',authRouter);
-app.use('/api/Users', userRouter);
-app.use('/api/Meetings', meetingRouter);
-app.use('/api/Topics', topicsRouter);
-app.use('/api/Signatures',signaturesRouter);
-app.use('/api/Attendees',attendeesRouter);
+app.use('/api/projects', ProjectsRoute);
+app.use('/api/media', MediaRoute);
+app.use('/api/project-links', ProjectLinkRoute);
+app.use('/api/project-sections', ProjectSectionRoute);
+app.use('/api/project-timeline', ProjectTimelineRoute);
+app.use('/api/tech-skills', TechSkillsRoute);
+app.use('/api/services', ServiceRoute);
+app.use('/api/project-tech', ProjectTechRoute);
+app.use('/api/settings', SettingsRoute);
+app.use('/api/content', ContentRoute);
 
 // Default Message
 app.get('/',(req,res)=>{
-   res.send('Welcome to the Meeting Minutes  Management System BackEnd Project')
+   res.send('Welcome to the code with gakenye System BackEnd Project')
 })
 
 app.listen(PORT,()=>{
-    console.log(`App is running on http://localhost:${PORT}`);
+    console.log(`Portifolio App is running on http://localhost:${PORT}`);
 })

@@ -1,6 +1,6 @@
 {
-  "id": "51f1d7c1-978e-470b-bbbf-2f6d9e4e4096",
-  "prevId": "89c920b6-9aeb-4ba9-8099-07e7952c1054",
+  "id": "59f82f79-74d5-471f-882b-a9881eb8287b",
+  "prevId": "51f1d7c1-978e-470b-bbbf-2f6d9e4e4096",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -305,12 +305,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "media_id": {
-          "name": "media_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
         "last_updated": {
           "name": "last_updated",
           "type": "timestamp",
@@ -320,21 +314,7 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "page_content_media_id_media_assets_id_fk": {
-          "name": "page_content_media_id_media_assets_id_fk",
-          "tableFrom": "page_content",
-          "tableTo": "media_assets",
-          "columnsFrom": [
-            "media_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "page_content_key_unique": {
@@ -345,6 +325,72 @@
           ]
         }
       },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.page_content_media": {
+      "name": "page_content_media",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "content_id": {
+          "name": "content_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "media_id": {
+          "name": "media_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "display_order": {
+          "name": "display_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "page_content_media_content_id_page_content_id_fk": {
+          "name": "page_content_media_content_id_page_content_id_fk",
+          "tableFrom": "page_content_media",
+          "tableTo": "page_content",
+          "columnsFrom": [
+            "content_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "page_content_media_media_id_media_assets_id_fk": {
+          "name": "page_content_media_media_id_media_assets_id_fk",
+          "tableFrom": "page_content_media",
+          "tableTo": "media_assets",
+          "columnsFrom": [
+            "media_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false

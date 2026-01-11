@@ -1,0 +1,44 @@
+### Variables
+@baseUrl = http://localhost:5000/api
+
+# 1️⃣ SETUP: Use a valid Project ID from your projects table
+@projectId = 39822269-3247-488c-8190-77b02b1d5e6d
+
+# 2️⃣ SETUP: Use valid Tech IDs from your tech-skills table
+@techId1 = b47982b2-a8e2-45d7-bcee-9237d9421382
+@techId2 = bf15ad88-5a5c-4452-a7a8-112f4a4b60c4
+
+
+// ==========================================
+// 🔗 PROJECT TECH STACK MANAGEMENT
+// ==========================================
+
+### ✅ 1. Sync Project Tech Stack (Recommended)
+# This clears old techs and sets the new list.
+# Best for "Edit Project" forms with checkboxes.
+PUT {{baseUrl}}/project-tech/{{projectId}}/sync
+Content-Type: application/json
+
+{
+  "technologyIds": ["{{techId1}}", "{{techId2}}"]
+}
+
+
+### ✅ 2. Add Tech to Existing Stack
+# Appends new technologies without removing current ones.
+POST {{baseUrl}}/project-tech/{{projectId}}
+Content-Type: application/json
+
+{
+  "technologyIds": ["{{techId1}}"]
+}
+
+
+### 🔍 3. Get Project's Tech Stack
+# Returns the list of technologies linked to this project.
+GET {{baseUrl}}/project-tech/{{projectId}}
+
+
+### 🗑️ 4. Remove Specific Tech from Project
+# Unlinks only ONE technology from the project.
+DELETE {{baseUrl}}/project-tech/{{projectId}}/{{techId1}}

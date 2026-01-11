@@ -1,0 +1,86 @@
+### Variables
+@baseUrl = http://localhost:5000/api
+
+### 🖼️ Create Media Asset
+# This provides the ID needed for the project thumbnail
+POST {{baseUrl}}/media
+Content-Type: application/json
+
+{
+  "fileName": "sub Hero Image.png",
+  "fileUrl": "https://res.cloudinary.com/your-cloud/image/upload/v1/portfolio/thumb.png",
+  "fileType": "image/png",
+  "fileSize": 102400
+}
+
+###
+# 🛠️ SETUP: Use a valid Media IDs from your media_assets table
+@mediaId1 = c0cbdcc8-18e1-4c03-84fe-f11e0fe9ee1d
+@mediaId2 = 7602b887-d285-4277-b0f7-5d5524829ca0
+
+
+// ==========================================
+// 📝 1. SAVE/UPDATE CONTENT (UPSERT)
+// ==========================================
+
+### ✅ Create or Update Hero Section (Multi-Image)
+# This will create the text and link the two media IDs provided.
+# If you run this again with different text, it updates the existing key.
+POST {{baseUrl}}/content
+Content-Type: application/json
+
+{
+  "contentData": {
+    "page": "home",
+    "section": "hero",
+    "key": "home_hero_main",
+    "title": "Innovative Full Stack Solutions",
+    "value": "I specialize in building scalable web applications using React, Node, and Drizzle ORM."
+  },
+  "mediaIds": ["{{mediaId1}}", "{{mediaId2}}"]
+}
+
+
+
+### ✅ Create About Me Section (No Images)
+# You can also send an empty array if the section is text-only.
+POST {{baseUrl}}/content
+Content-Type: application/json
+
+{
+  "contentData": {
+    "page": "about",
+    "section": "bio",
+    "key": "about_bio_text",
+    "title": "My Journey",
+    "value": "I started coding 10 years ago and haven't stopped since..."
+  },
+  "mediaIds": []
+}
+
+###
+
+// ==========================================
+// 🔍 2. RETRIEVAL
+// ==========================================
+
+### 📜 Get All Content for the Home Page
+# This returns an array of all sections (Hero, Services, etc.) for 'home'
+GET {{baseUrl}}/content/page/about
+
+###
+
+### 🎯 Get Specific Content by Key
+# Useful if you just need to fetch the 'Hero' data specifically
+GET {{baseUrl}}/content/key/home_hero_main
+
+###
+
+// ==========================================
+// ❌ 3. DELETE
+// ==========================================
+
+### 🗑️ Delete a Content Block
+# Use the UUID (ID) of the content block (found in GET results)
+# Note: This will also remove the links in the page_content_media table.
+DELETE {{baseUrl}}/content/PASTE_CONTENT_ID_HERE

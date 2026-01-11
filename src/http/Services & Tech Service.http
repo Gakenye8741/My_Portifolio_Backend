@@ -1,0 +1,83 @@
+### Variables
+@baseUrl = http://localhost:5000/api
+
+# 1️⃣ SETUP: Create an icon first and paste ID here
+@iconId = 96235b17-ec0b-428f-adfd-6656c863ec01
+
+# 2️⃣ SETUP: Use IDs from your existing Technologies table
+
+
+# 3️⃣ SETUP: Create a service and paste its ID here
+@serviceId = 97679f8a-d7e2-4ff8-ab79-a66ae9b7ad96
+@techId1 = b47982b2-a8e2-45d7-bcee-9237d9421382
+@techId2 = bf15ad88-5a5c-4452-a7a8-112f4a4b60c4
+
+// ==========================================
+// 🛠️ 1. CREATE SERVICE
+// ==========================================
+
+### ✅ Create Service + Link Technologies
+# This uses the transaction to create the service and the bridge table entries
+
+### Now run the POST again
+POST {{baseUrl}}/services
+Content-Type: application/json
+
+{
+  "serviceData": {
+    "title": "Full-Stack Web Development",
+    "slug": "web-development-2026",
+    "description": "Building scalable web applications.",
+    "iconId": "{{iconId}}",
+    "pricingType": "fixed",
+    "isAvailable": true
+  },
+  "techIds": ["{{techId1}}", "{{techId2}}"]
+}
+
+// ==========================================
+// 🔍 2. FETCH SERVICES
+// ==========================================
+
+### 📜 Get All Services
+# Returns everything: Services -> Tech Stack -> Tech Details -> Icons
+GET {{baseUrl}}/services
+
+
+### 🔗 Get Service by Slug
+# Useful for frontend routing (e.g., /services/web-development-2026)
+GET {{baseUrl}}/services/slug/web-development-2026
+
+
+// ==========================================
+// 🔄 3. UPDATES & SYNC
+// ==========================================
+
+### 📝 Update Service Basic Info
+PUT {{baseUrl}}/services/{{serviceId}}
+Content-Type: application/json
+
+{
+  "title": "Enterprise Web Solutions",
+  "isAvailable": false
+}
+
+
+### ⛓️ Sync Service Tech Stack
+# Replaces all previous technologies with this new list
+PATCH {{baseUrl}}/services/{{serviceId}}/techs
+Content-Type: application/json
+
+{
+  "techIds": ["{{techId2}}"]
+}
+
+
+// ==========================================
+// ❌ 4. DELETE
+// ==========================================
+
+### 🗑️ Delete Service
+# Note: service_technologies entries will be deleted via Cascade
+DELETE {{baseUrl}}/services/{{serviceId}}
+

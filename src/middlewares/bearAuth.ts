@@ -1,10 +1,7 @@
-
-// Token
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import { userRole } from "../drizzle/schema";
-
+import { roleEnum } from "../drizzle/schema"; // Updated import
 
 dotenv.config();
 
@@ -13,8 +10,8 @@ type DecodedToken = {
   username: string;
   nationalId: number;
   email: string;
-  role: typeof userRole.enumValues[number]; // 'user' | 'admin'
-  firstName:string;
+  role: typeof roleEnum.enumValues[number]; // Now points to roleEnum: 'admin'
+  firstName: string;
   lastName: string;
   exp: number;
 };
@@ -41,9 +38,9 @@ export const verifyToken = async (
   }
 };
 
-// Auth middleware factory with correct return type
+// Auth middleware factory
 export const authMiddleware = (
-  requiredRole: typeof userRole.enumValues[number] | "any"
+  requiredRole: typeof roleEnum.enumValues[number] | "any"
 ): ((req: Request, res: Response, next: NextFunction) => Promise<void>) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     const token = req.header("Authorization")?.replace("Bearer ", "");
@@ -63,19 +60,25 @@ export const authMiddleware = (
       return;
     }
 
-    const userType = decodedToken.role;
+    // ✅ Attach user to request
+    req.user = decodedToken;
 
+    // ✅ Role check logic
     if (requiredRole === "any") {
-      req.user = decodedToken;
-      next();
-    } else {
-      res.status(403).json({
-        error: "Forbidden: You do not have permission to access this resource",
-      });
+      return next();
     }
+
+    if (decodedToken.role === requiredRole) {
+      return next();
+    }
+
+    // If role doesn't match
+    res.status(403).json({
+      error: "Forbidden: You do not have permission to access this resource",
+    });
   };
 };
 
 // Role-based middleware exports
-
+export const adminOnly = authMiddleware("admin");
 export const anyAuthenticatedUser = authMiddleware("any");

@@ -1,0 +1,110 @@
+### Variables
+@baseUrl = http://localhost:5000/api
+
+# 1️⃣ STEP ONE: Create Media (Thumbnail)
+# Paste the returned ID from "Create Media" here:
+@mediaId = b5f0f0a3-3a0a-4025-8fb5-2ae10e20f5a5
+
+# 2️⃣ STEP TWO: Create Project
+# Paste the returned ID from "Create Project" here:
+@projectId = 522fec17-4643-4ba9-91f3-2685afe67b63
+
+# 3️⃣ STEP THREE: Create Section
+# Paste the returned ID from "Add Project Section" here:
+@sectionId = 3122c366-419b-4497-8461-893563914a84
+
+
+// ==========================================
+// 🖼️ MEDIA MODULE
+// ==========================================
+
+### ✅ Create Media Asset (Thumbnail)
+POST {{baseUrl}}/media
+Content-Type: application/json
+
+{
+  "fileName": "case-study-hero.jpg",
+  "fileUrl": "https://cloudinary.com/v123/hero.jpg",
+  "fileType": "image/jpeg",
+  "fileSize": 204800
+}
+
+
+// ==========================================
+// 📁 PROJECT MODULE
+// ==========================================
+
+### ✅ Create New Project
+# Uses @mediaId as the mainThumbnailId
+POST {{baseUrl}}/projects
+Content-Type: application/json
+
+{
+  "title": "E-Commerce Rebrand 2026",
+  "slug": "ecommerce-rebrand-2026",
+  "mainDescription": "A complete overhaul of a legacy retail platform.",
+  "mainThumbnailId": "{{mediaId}}",
+  "status": "published",
+  "isFeatured": true
+}
+
+
+
+### 🔍 Get Project By Slug
+GET {{baseUrl}}/projects/slug/ecommerce-rebrand-2026
+
+
+// ==========================================
+// 🔗 PROJECT LINKS MODULE
+// ==========================================
+
+### 🔄 Sync Project Links (Bulk)
+POST {{baseUrl}}/project-links/project/{{projectId}}/sync
+Content-Type: application/json
+
+[
+  { "label": "GitHub", "url": "https://github.com/dev/repo", "type": "github_fullstack" },
+  { "label": "Live Demo", "url": "https://site.com", "type": "live_demo" }
+]
+
+
+// ==========================================
+// 📖 PROJECT SECTIONS (Storytelling)
+// ==========================================
+
+### ✍️ Add Project Section (The Problem)
+POST {{baseUrl}}/project-sections
+Content-Type: application/json
+
+{
+  "projectId": "{{projectId}}",
+  "sectionTitle": "The Problem",
+  "explanation": "The client had a 10-second load time on mobile devices.",
+  "order": 2,
+  "mediaId": "{{mediaId}}"
+}
+
+
+
+### 🔃 Reorder Sections
+# Example of moving section 2 before section 1
+POST {{baseUrl}}/project-sections/reorder
+Content-Type: application/json
+
+[
+  { "id": "{{sectionId}}", "order": 2 }
+]
+
+
+
+### 🔍 Get Full Project Narrative
+GET {{baseUrl}}/project-sections/project/{{projectId}}
+
+
+// ==========================================
+// 🗑️ CLEANUP
+// ==========================================
+
+### ❌ Delete Project
+# This will cascade delete sections and links automatically!
+DELETE {{baseUrl}}/projects/{{projectId}}

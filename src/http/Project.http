@@ -1,0 +1,77 @@
+### Variables
+@baseUrl = http://localhost:5000/api
+@projectSlug = my-awesome-portfolio
+# After you run the POST request, copy the ID from the response and paste it here
+@projectId = 123e4567-e89b-12d3-a456-426614174000
+# A valid UUID from your media_assets table
+@thumbnailId = 0055af03-ff0b-4ed1-9773-409b4a7c2a1a
+
+// ==========================================
+// 1. PROJECT RETRIEVAL
+// ==========================================
+
+### ✅ Get All Projects
+# Maps to: GET /api/projects/
+GET {{baseUrl}}/projects
+Content-Type: application/json
+
+
+
+### 🔗 Get Project By Slug
+# Maps to: GET /api/projects/slug/:slug
+# This also increments the view count in the background
+GET {{baseUrl}}/projects/slug/{{projectSlug}}
+Content-Type: application/json
+
+
+
+### 🆔 Get Project By ID
+# Maps to: GET /api/projects/:id
+GET {{baseUrl}}/projects/{{projectId}}
+Content-Type: application/json
+
+
+
+### 🔍 Get Project with Thumbnail Details
+# Maps to: GET /api/projects/:id/details
+GET {{baseUrl}}/projects/{{projectId}}/details
+Content-Type: application/json
+
+
+// ==========================================
+// 2. PROJECT MANAGEMENT (ADMIN)
+// ==========================================
+
+### ✍️ Create New Project
+# Maps to: POST /api/projects/
+POST {{baseUrl}}/projects
+Content-Type: application/json
+
+{
+  "title": "My Awesome Portfolio",
+  "slug": "my-awesome-portfolio",
+  "mainDescription": "A high-performance portfolio built with Node.js, Drizzle, and UUIDs.",
+  "mainThumbnailId": "{{thumbnailId}}",
+  "status": "published",
+  "isFeatured": true
+}
+
+
+
+### 🔄 Update Project
+# Maps to: PUT /api/projects/:id
+PUT {{baseUrl}}/projects/{{projectId}}
+Content-Type: application/json
+
+{
+  "title": "Updated Portfolio Title",
+  "isFeatured": false,
+  "status": "archived"
+}
+
+
+
+### ❌ Delete Project
+# Maps to: DELETE /api/projects/:id
+DELETE {{baseUrl}}/projects/{{projectId}}
+Content-Type: application/json

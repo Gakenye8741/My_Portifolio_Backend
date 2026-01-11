@@ -1,0 +1,82 @@
+### Variables
+@baseUrl = http://localhost:5000/api
+
+// ==========================================
+// 🛠️ 1. UPSERT SETTINGS (SINGLE)
+// ==========================================
+
+### ✅ Create or Update a Single Setting
+# Use this for individual changes like site title
+POST {{baseUrl}}/settings
+Content-Type: application/json
+
+{
+  "key": "site_name",
+  "value": "Gemini | Creative Portfolio",
+  "category": "seo"
+}
+
+
+### ✅ Create or Update Social Link
+POST {{baseUrl}}/settings
+Content-Type: application/json
+
+{
+  "key": "github_url",
+  "value": "https://github.com/yourusername",
+  "category": "social"
+}
+
+
+// ==========================================
+// 📦 2. BULK OPERATIONS
+// ==========================================
+
+### ✅ Bulk Save Settings
+# This is the most powerful endpoint for your Admin Panel
+# It will update existing keys and create new ones simultaneously
+POST {{baseUrl}}/settings/bulk
+Content-Type: application/json
+
+[
+  {
+    "key": "meta_description",
+    "value": "Professional portfolio of a Full Stack Developer specializing in React and Node.",
+    "category": "seo"
+  },
+  {
+    "key": "contact_email",
+    "value": "hello@example.com",
+    "category": "contact"
+  },
+  {
+    "key": "primary_color",
+    "value": "#3b82f6",
+    "category": "theme"
+  }
+]
+
+
+// ==========================================
+// 🔍 3. RETRIEVAL
+// ==========================================
+
+### 📜 Get All Site Settings
+GET {{baseUrl}}/settings
+
+
+### 🎯 Get Settings by Category
+# Useful for fetching all social links for the footer
+GET {{baseUrl}}/settings?category=social
+
+
+### 🔑 Get Value for a Specific Key
+GET {{baseUrl}}/settings/key/site_name
+
+
+// ==========================================
+// ❌ 4. DELETE
+// ==========================================
+
+### 🗑️ Delete Setting by Key
+DELETE {{baseUrl}}/settings/primary_color

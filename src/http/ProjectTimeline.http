@@ -1,0 +1,68 @@
+### Variables
+@baseUrl = http://localhost:5000/api
+
+# 1️⃣ SETUP: Create a Project first and paste its ID here:
+@projectId = 522fec17-4643-4ba9-91f3-2685afe67b63
+
+# 2️⃣ SETUP: Create a Timeline Event and paste its ID here:
+@timelineId = 5b38d9d0-a693-4ce4-81f3-4e51c7c33508
+
+
+// ==========================================
+// 📅 PROJECT TIMELINE MODULE
+// ==========================================
+
+POST http://localhost:5000/api/project-timeline
+Content-Type: application/json
+
+{
+  "projectId": "{{projectId}}",
+  "title": "Project Kickoff", 
+  "description": "Started the development phase",
+  "date": "2026-01-11T12:00:00Z"
+}
+
+
+### ✅ Create Timeline Event (New Update)
+# Adding a second event to test chronological sorting
+POST {{baseUrl}}/project-timeline
+Content-Type: application/json
+
+{
+  "projectId": "{{projectId}}",
+  "title": "v1.0.0 Release",
+  "description": "Official launch of the portfolio with full CRUD capabilities.",
+  "date": "2026-01-11T15:30:00Z"
+}
+
+
+### 📜 Get All Timeline Events for a Project
+# This will return events sorted by date (newest first)
+GET {{baseUrl}}/project-timeline/project/{{projectId}}
+Content-Type: application/json
+
+
+### 🔄 Update a Timeline Event
+# Use this to fix a typo or expand a description
+PUT {{baseUrl}}/project-timeline/{{timelineId}}
+Content-Type: application/json
+
+{
+  "title": "v1.0.1 - Performance Patch",
+  "description": "Optimized database queries and fixed UUID casting errors."
+}
+
+
+### ❌ Delete a Timeline Event
+DELETE {{baseUrl}}/project-timeline/{{timelineId}}
+Content-Type: application/json
+
+
+// ==========================================
+// 🔍 VERIFICATION
+// ==========================================
+
+### 🔎 Check Project with Timeline
+# This helps you see if the events are still there
+GET {{baseUrl}}/projects/{{projectId}}
+Content-Type: application/json

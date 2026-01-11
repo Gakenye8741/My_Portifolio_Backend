@@ -1,0 +1,80 @@
+### Variables
+@baseUrl = http://localhost:5000/api
+
+# 1. First, Create a Media Asset and copy the ID from the response
+# 2. Paste that ID here:
+@mediaId = REPLACE_WITH_UUID_FROM_MEDIA_POST_RESPONSE
+
+# 3. Use this slug for testing
+@projectSlug = my-pro-portfolio-2026
+
+// ==========================================
+// 1. MEDIA ASSETS (Run this first!)
+// ==========================================
+
+### 🖼️ Create Media Asset
+# This provides the ID needed for the project thumbnail
+POST {{baseUrl}}/media
+Content-Type: application/json
+
+{
+  "fileName": "service-thumbnail.png",
+  "fileUrl": "https://res.cloudinary.com/your-cloud/image/upload/v1/portfolio/thumb.png",
+  "fileType": "image/png",
+  "fileSize": 102400
+}
+
+
+### 📂 Get All Media Assets
+GET {{baseUrl}}/media
+Content-Type: application/json
+
+
+// ==========================================
+// 2. PROJECT SYSTEM
+// ==========================================
+
+### ✍️ Create New Project
+# IMPORTANT: Use the @mediaId generated above. 
+# If you don't have an ID yet, set "mainThumbnailId" to null.
+POST {{baseUrl}}/projects
+Content-Type: application/json
+
+{
+  "title": "Professional Portfolio 2026",
+  "slug": "{{projectSlug}}",
+  "mainDescription": "An elite portfolio built with Drizzle ORM and UUIDs.",
+  "mainThumbnailId": "{{mediaId}}",
+  "status": "published",
+  "isFeatured": true
+}
+
+
+### ✅ Get All Projects
+GET {{baseUrl}}/projects
+Content-Type: application/json
+
+
+### 🔗 Get Project By Slug
+GET {{baseUrl}}/projects/slug/{{projectSlug}}
+Content-Type: application/json
+
+
+### 🆔 Get Project By ID
+GET {{baseUrl}}/projects/{{mediaId}}
+Content-Type: application/json
+
+
+// ==========================================
+// 3. CLEANUP
+// ==========================================
+
+### ❌ Delete Media Asset
+# Note: This will fail if a project is currently using this ID!
+DELETE {{baseUrl}}/media/{{mediaId}}
+Content-Type: application/json
+
+
+### ❌ Delete Project
+DELETE {{baseUrl}}/projects/{{mediaId}}
+Content-Type: application/json

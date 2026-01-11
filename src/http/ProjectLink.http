@@ -1,0 +1,107 @@
+### Variables
+@baseUrl = http://localhost:5000/api
+
+# 1️⃣ STEP ONE: Create Media (Upload logic)
+# Copy the "id" from the response of "Create Media" and paste it here:
+@mediaId = 7a9edf5d-bf1a-4a8e-bd51-974f48c5e5ad
+
+# 2️⃣ STEP TWO: Create Project
+# Copy the "id" from the response of "Create Project" and paste it here:
+@projectId = 39822269-3247-488c-8190-77b02b1d5e6d
+
+# 3️⃣ Variable for slug testing
+@projectSlug = quantum-ai-dashboard
+
+
+// ==========================================
+// 🖼️ MEDIA ASSET MODULE
+// ==========================================
+
+### ✅ Create Media Asset
+# This must exist before you can link it to a project as a thumbnail
+POST {{baseUrl}}/media
+Content-Type: application/json
+
+{
+  "fileName": "hero-thumbnail.png",
+  "fileUrl": "https://res.cloudinary.com/demo/image/upload/sample.jpg",
+  "fileType": "image/png",
+  "fileSize": 512000
+}
+
+
+
+### 📂 Get All Media
+GET {{baseUrl}}/media
+
+
+// ==========================================
+// 📁 PROJECT MODULE
+// ==========================================
+
+### ✅ Create New Project
+# Uses the @mediaId from Step 1
+POST {{baseUrl}}/projects
+Content-Type: application/json
+
+{
+  "title": "Quantum AI Dashboard",
+  "slug": "{{projectSlug}}",
+  "mainDescription": "A high-performance dashboard with real-time analytics.",
+  "mainThumbnailId": "{{mediaId}}",
+  "status": "published",
+  "isFeatured": true
+}
+
+
+
+### 🔍 Get Project By Slug
+# This should trigger the view counter increment
+GET {{baseUrl}}/projects/slug/{{projectSlug}}
+
+
+
+### 🆔 Get Project By ID
+GET {{baseUrl}}/projects/{{projectId}}
+
+
+// ==========================================
+// 🔗 PROJECT LINKS MODULE
+// ==========================================
+
+### 🔄 Sync Project Links (Bulk Update)
+# This wipes old links and replaces them with this new list
+POST {{baseUrl}}/project-links/project/{{projectId}}/sync
+Content-Type: application/json
+
+[
+  {
+    "label": "Source Code",
+    "url": "https://github.com/user/quantum-ai",
+    "type": "github_fullstack"
+  },
+  {
+    "label": "Live Preview",
+    "url": "https://quantum-ai-demo.com",
+    "type": "live_demo"
+  }
+]
+
+
+
+### 🔗 Get All Links for Project
+GET {{baseUrl}}/project-links/project/{{projectId}}
+
+
+// ==========================================
+// ❌ CLEANUP / DELETE
+// ==========================================
+
+### 🗑️ Delete Project
+# This will also delete the links because of the "onDelete: cascade"
+DELETE {{baseUrl}}/projects/{{projectId}}
+
+
+
+### 🗑️ Delete Media
+DELETE {{baseUrl}}/media/{{mediaId}}

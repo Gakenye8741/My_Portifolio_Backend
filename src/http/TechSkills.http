@@ -1,0 +1,75 @@
+// ==========================================
+// 🎨 ICON & ASSET MANAGEMENT
+// ==========================================
+@baseUrl = http://localhost:5000/api
+
+### ✅ 1. Create Tech Icon (Media Asset)
+# @name createIcon
+POST {{baseUrl}}/media
+Content-Type: application/json
+
+{
+  "fileName": "React.svg",
+  "fileUrl": "https://raw.githubusercontent.com/devicons/devicon/master/icons/typescript/typescript-original.svg",
+  "fileType": "image/svg+xml",
+  "fileSize": 1500
+}
+
+### 💡 Copy the ID from the response above and update the variable below:
+@createdIconId = 9520b3b8-68f9-4407-b48e-9d317be1eae0
+
+
+// ==========================================
+// 🛠️ TECH & SKILLS OPERATIONS
+// ==========================================
+
+### ✅ 2. Create New Tech + Skill
+# Uses the transaction service to create both records at once
+POST {{baseUrl}}/tech-skills
+Content-Type: application/json
+
+{
+  "techData": {
+    "name": "TypeScripts",
+    "category": "backend",
+    "iconId": "{{createdIconId}}"
+  },
+  "skillData": {
+    "proficiency": 95,
+    "yearsExperience": 3
+  }
+}
+
+
+### 🔍 3. Get All Tech & Skills
+# Returns full list with nested 'skill' and 'icon' objects
+GET {{baseUrl}}/tech-skills
+
+
+### 🎯 4. Filter Tech by Category
+# Tests the optional category filter (e.g., frontend, backend, language)
+GET {{baseUrl}}/tech-skills?category=frontend
+
+
+### 🔄 5. Update Tech + Skill
+# Update specific ID - Note the separate update objects in the body
+# Replace '{{techId}}' with an actual UUID from Step 2
+@techId = bf15ad88-5a5c-4452-a7a8-112f4a4b60c4
+
+PUT {{baseUrl}}/tech-skills/{{techId}}
+Content-Type: application/json
+
+{
+  "techUpdates": {
+    "category": "backend"
+  },
+  "skillUpdates": {
+    "proficiency": 98,
+    "yearsExperience": 4
+  }
+}
+
+
+### 🗑️ 6. Delete Technology
+# This will cascade delete the skill metrics automatically
+DELETE {{baseUrl}}/tech-skills/{{techId}}
