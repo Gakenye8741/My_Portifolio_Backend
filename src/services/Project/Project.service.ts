@@ -31,7 +31,11 @@ export const getProjectByIdService = async (
     with: {
       thumbnail: true,      // Requires relation defined in schema
       links: true, 
-      techs: true,         // Fetches project_links
+      techs: {
+        with: {
+        technology: true // This is the missing link!
+      }
+      },         // Fetches project_links
       sections: {           // Fetches project_sections
         with: {
           media: true       // Fetches image for each section
