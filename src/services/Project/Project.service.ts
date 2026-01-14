@@ -11,7 +11,8 @@ export const getAllProjectsService = async (): Promise<TSelectProject[]> => {
   return db.query.projects.findMany({
     orderBy: [desc(projects.createdAt)], 
     with: {
-      thumbnail: true
+      thumbnail: true,
+      techs: true,  
     }
   });
 };
@@ -25,7 +26,8 @@ export const getProjectByIdService = async (
     where: eq(projects.id, id),
     with: {
       thumbnail: true,      // Requires relation defined in schema
-      links: true,          // Fetches project_links
+      links: true, 
+      techs: true,         // Fetches project_links
       sections: {           // Fetches project_sections
         with: {
           media: true       // Fetches image for each section
