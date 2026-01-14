@@ -12,7 +12,11 @@ export const getAllProjectsService = async (): Promise<TSelectProject[]> => {
     orderBy: [desc(projects.createdAt)], 
     with: {
       thumbnail: true,
-      techs: true,  
+      techs: {
+        with: {
+        technology: true // This is the missing link!
+      }
+      } 
     }
   });
 };
