@@ -2,9 +2,9 @@
 @baseUrl = http://localhost:5000/api
 @projectSlug = my-awesome-portfolio
 # After you run the POST request, copy the ID from the response and paste it here
-@projectId = 123e4567-e89b-12d3-a456-426614174000
+@projectId = 522fec17-4643-4ba9-91f3-2685afe67b63
 # A valid UUID from your media_assets table
-@thumbnailId = 0055af03-ff0b-4ed1-9773-409b4a7c2a1a
+@thumbnailId = 43cd75b2-31db-42f2-b1e8-9cb4acf2511d
 
 // ==========================================
 // 1. PROJECT RETRIEVAL
@@ -42,15 +42,15 @@ Content-Type: application/json
 // 2. PROJECT MANAGEMENT (ADMIN)
 // ==========================================
 
-### ✍️ Create New Project
+### ✍️ Create New Project: Real-Time Analytics Dashboard
 # Maps to: POST /api/projects/
 POST {{baseUrl}}/projects
 Content-Type: application/json
 
 {
-  "title": "My Awesome Portfolio",
-  "slug": "my-awesome-portfolio",
-  "mainDescription": "A high-performance portfolio built with Node.js, Drizzle, and UUIDs.",
+  "title": "Nexus Insight: AI Analytics Engine",
+  "slug": "nexus-insight-ai-engine",
+  "mainDescription": "A sophisticated data visualization platform leveraging Node.js for real-time processing. Built with Drizzle ORM for type-safe database interactions and utilizing UUID v4 for secure, non-sequential resource identification.",
   "mainThumbnailId": "{{thumbnailId}}",
   "status": "published",
   "isFeatured": true

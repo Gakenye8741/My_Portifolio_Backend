@@ -9,7 +9,10 @@ import {
 // ✅ Get all projects
 export const getAllProjectsService = async (): Promise<TSelectProject[]> => {
   return db.query.projects.findMany({
-    orderBy: [desc(projects.createdAt)], // Better to order by date than UUID
+    orderBy: [desc(projects.createdAt)], 
+    with: {
+      thumbnail: true
+    }
   });
 };
 

@@ -18,8 +18,8 @@ POST {{baseUrl}}/media
 Content-Type: application/json
 
 {
-  "fileName": "service-thumbnail.png",
-  "fileUrl": "https://res.cloudinary.com/your-cloud/image/upload/v1/portfolio/thumb.png",
+  "fileName": "Ai-thumbnail.png",
+  "fileUrl": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=1200",
   "fileType": "image/png",
   "fileSize": 102400
 }

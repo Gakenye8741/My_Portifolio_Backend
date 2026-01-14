@@ -9,14 +9,14 @@ POST {{baseUrl}}/media
 Content-Type: application/json
 
 {
-  "fileName": "React.svg",
-  "fileUrl": "https://raw.githubusercontent.com/devicons/devicon/master/icons/typescript/typescript-original.svg",
+  "fileName": "html.svg",
+  "fileUrl": "https://raw.githubusercontent.com/devicons/devicon/master/icons/html/html-original.svg",
   "fileType": "image/svg+xml",
   "fileSize": 1500
 }
 
 ### 💡 Copy the ID from the response above and update the variable below:
-@createdIconId = 9520b3b8-68f9-4407-b48e-9d317be1eae0
+@createdIconId = e3933db1-d663-47bd-8905-b9363aae11a3
 
 
 // ==========================================
@@ -30,12 +30,12 @@ Content-Type: application/json
 
 {
   "techData": {
-    "name": "TypeScripts",
-    "category": "backend",
+    "name": "HTML",
+    "category": "frontend",
     "iconId": "{{createdIconId}}"
   },
   "skillData": {
-    "proficiency": 95,
+    "proficiency": 99,
     "yearsExperience": 3
   }
 }
