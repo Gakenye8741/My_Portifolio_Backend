@@ -1,5 +1,5 @@
 ### Variables
-@baseUrl = http://localhost:5000/api
+@baseUrl = https://portifoliobackend-ezefe7h3c6hnb4em.southafricanorth-01.azurewebsites.net/api
 
 # 1️⃣ SETUP: Use a valid Project ID from your projects table
 @projectId = 39822269-3247-488c-8190-77b02b1d5e6d
