@@ -1,84 +1,81 @@
 import { NextFunction, Request, Response } from "express";
-import jwt from "jsonwebtoken";
-import dotenv from "dotenv";
-import { roleEnum } from "../drizzle/schema"; // Updated import
+import { getSessionWithUserService, TPublicUser } from "../auth/auth.service";
 
-dotenv.config();
 
-// JWT payload type
-type DecodedToken = {
-  username: string;
-  nationalId: number;
-  email: string;
-  role: typeof roleEnum.enumValues[number]; // Now points to roleEnum: 'admin'
-  firstName: string;
-  lastName: string;
-  exp: number;
-};
-
-// Extend Express Request with user payload
+// Extend Express Request with our public user
 declare global {
   namespace Express {
     interface Request {
-      user?: DecodedToken;
+      user?: TPublicUser;
     }
   }
 }
 
-// Token verification helper
-export const verifyToken = async (
-  token: string,
-  secret: string
-): Promise<DecodedToken | null> => {
+// ==========================================
+// requireAuth — any logged-in user
+// ==========================================
+export const requireAuth = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
-    const decoded = jwt.verify(token, secret) as DecodedToken;
-    return decoded;
-  } catch (error) {
-    return null;
+    const sessionId = req.cookies?.session as string | undefined;
+
+    if (!sessionId) {
+      res.status(401).json({ error: "Not authenticated" });
+      return;
+    }
+
+    const ctx = await getSessionWithUserService(sessionId);
+
+    if (!ctx) {
+      res.clearCookie("session", { path: "/" });
+      res.status(401).json({ error: "Session expired or invalid" });
+      return;
+    }
+
+    req.user = ctx.user;
+    next();
+  } catch (err) {
+    next(err);
   }
 };
 
-// Auth middleware factory
-export const authMiddleware = (
-  requiredRole: typeof roleEnum.enumValues[number] | "any"
-): ((req: Request, res: Response, next: NextFunction) => Promise<void>) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
-    const token = req.header("Authorization")?.replace("Bearer ", "");
+// ==========================================
+// requireAdmin — must be logged in AND isAdmin
+// ==========================================
+export const requireAdmin = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const sessionId = req.cookies?.session as string | undefined;
 
-    if (!token) {
-      res.status(401).json({ error: "Authorization header is missing" });
+    if (!sessionId) {
+      res.status(401).json({ error: "Not authenticated" });
       return;
     }
 
-    const decodedToken = await verifyToken(
-      token,
-      process.env.JWT_SECRET as string
-    );
+    const ctx = await getSessionWithUserService(sessionId);
 
-    if (!decodedToken) {
-      res.status(401).json({ error: "Invalid or expired token" });
+    if (!ctx) {
+      res.clearCookie("session", { path: "/" });
+      res.status(401).json({ error: "Session expired or invalid" });
       return;
     }
 
-    // ✅ Attach user to request
-    req.user = decodedToken;
-
-    // ✅ Role check logic
-    if (requiredRole === "any") {
-      return next();
+    if (!ctx.user.isAdmin) {
+      res.status(403).json({
+        error: "Forbidden: admin access required",
+      });
+      return;
     }
 
-    if (decodedToken.role === requiredRole) {
-      return next();
-    }
-
-    // If role doesn't match
-    res.status(403).json({
-      error: "Forbidden: You do not have permission to access this resource",
-    });
-  };
+    req.user = ctx.user;
+    next();
+  } catch (err) {
+    next(err);
+  }
 };
-
-// Role-based middleware exports
-export const adminOnly = authMiddleware("admin");
-export const anyAuthenticatedUser = authMiddleware("any");

@@ -1,0 +1,298 @@
+### ============================================
+### FAQs API — REST Client Tests
+### ============================================
+@baseUrl = http://localhost:5000/api
+@authUrl = {{baseUrl}}/auth
+@faqsUrl = {{baseUrl}}/faqs
+
+@email = brayogakenye04@gmail.com
+@password = hunter2hunter2
+
+
+### ============================================
+### 0. LOGIN (must run first — stores session cookie)
+### ============================================
+# @name login
+POST {{authUrl}}/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+
+### ============================================
+### 1. PUBLIC — LIST (empty initially)
+### ============================================
+GET {{faqsUrl}}
+
+
+### ============================================
+### 2. ADMIN — CREATE FAQ 1
+### POST /api/faqs
+### Expected: 201 { data: { id, question, answer, order: 1 } }
+### ============================================
+# @name createFaq1
+POST {{faqsUrl}}
+Content-Type: application/json
+
+{
+  "question": "What's your typical project timeline?",
+  "answer": "Most MVPs take 2-4 weeks depending on complexity. Larger projects are broken into milestones, each with its own delivery date. I share a detailed timeline before we start so there are no surprises."
+}
+
+
+### ============================================
+### 3. ADMIN — CREATE FAQ 2 (auto order = 2)
+### ============================================
+# @name createFaq2
+POST {{faqsUrl}}
+Content-Type: application/json
+
+{
+  "question": "How do we get started?",
+  "answer": "Reach out through the contact form with a brief description of your project. I'll reply within 24 hours to schedule a discovery call. If we're a good fit, I'll send a proposal with scope, timeline, and pricing."
+}
+
+
+### ============================================
+### 4. ADMIN — CREATE FAQ 3 (explicit order=0 → goes first)
+### ============================================
+# @name createFaq3
+POST {{faqsUrl}}
+Content-Type: application/json
+
+{
+  "question": "Do you work with international clients?",
+  "answer": "Yes — I've worked with clients across the US, UK, and Europe. I'm based in Kenya (EAT timezone) but adapt my schedule for calls. All payments are in USD via bank transfer or Wise.",
+  "order": 0
+}
+
+
+### ============================================
+### 5. ADMIN — CREATE FAQ 4
+### ============================================
+# @name createFaq4
+POST {{faqsUrl}}
+Content-Type: application/json
+
+{
+  "question": "What's your pricing model?",
+  "answer": "I offer both fixed-price (for well-defined scopes) and hourly (for exploratory work). Fixed-price starts at $X for MVPs. Contact me for a quote — I'll give you a range after our first call, no strings attached."
+}
+
+
+### ============================================
+### 6. ADMIN — CREATE (missing question, expect 400)
+### ============================================
+POST {{faqsUrl}}
+Content-Type: application/json
+
+{
+  "answer": "An answer without a question."
+}
+
+
+### ============================================
+### 7. ADMIN — CREATE (missing answer, expect 400)
+### ============================================
+POST {{faqsUrl}}
+Content-Type: application/json
+
+{
+  "question": "A question without an answer?"
+}
+
+
+### ============================================
+### 8. ADMIN — CREATE (negative order, expect 400)
+### ============================================
+POST {{faqsUrl}}
+Content-Type: application/json
+
+{
+  "question": "Bad order",
+  "answer": "Should fail",
+  "order": -1
+}
+
+
+### ============================================
+### 9. PUBLIC — LIST (should show 4, ordered by 'order' asc)
+### International first (order=0), then the rest
+### ============================================
+GET {{faqsUrl}}
+
+
+### ============================================
+### 10. PUBLIC — SEARCH "timeline"
+### ============================================
+GET {{faqsUrl}}?search=timeline
+
+
+### ============================================
+### 11. PUBLIC — PAGINATED (limit=2)
+### ============================================
+GET {{faqsUrl}}?page=1&limit=2
+
+
+### ============================================
+### 12. PUBLIC — GET BY ID
+### ============================================
+GET {{faqsUrl}}/{{createFaq1.response.body.$.data.id}}
+
+
+### ============================================
+### 13. PUBLIC — GET BY ID (nonexistent, expect 404)
+### ============================================
+GET {{faqsUrl}}/00000000-0000-0000-0000-000000000000
+
+
+### ============================================
+### 14. ADMIN — STATS
+### GET /api/faqs/admin/stats
+### Expected: { total: 4, maxOrder: 4 }
+### ============================================
+GET {{faqsUrl}}/admin/stats
+
+
+### ============================================
+### 15. ADMIN — UPDATE FAQ (question + answer)
+### PUT /api/faqs/:id
+### ============================================
+PUT {{faqsUrl}}/{{createFaq1.response.body.$.data.id}}
+Content-Type: application/json
+
+{
+  "question": "How long does a typical project take?",
+  "answer": "Most MVPs take 2-4 weeks. Larger projects are broken into milestones. I share a detailed timeline before we start so you always know what to expect."
+}
+
+
+### ============================================
+### 16. ADMIN — UPDATE (change order — should reorder on list)
+### ============================================
+PUT {{faqsUrl}}/{{createFaq4.response.body.$.data.id}}
+Content-Type: application/json
+
+{
+  "order": -1
+}
+
+
+### ============================================
+### 17. PUBLIC — LIST (order changed — FAQ 4 should be first?)
+### Actually order can't be -1 — expect 400 on #16
+### If you used order: 0, it should reorder
+### ============================================
+GET {{faqsUrl}}
+
+
+### ============================================
+### 18. ADMIN — UPDATE (invalid — empty question, expect 400)
+### ============================================
+PUT {{faqsUrl}}/{{createFaq1.response.body.$.data.id}}
+Content-Type: application/json
+
+{
+  "question": ""
+}
+
+
+### ============================================
+### 19. ADMIN — UPDATE (nonexistent id, expect 404)
+### ============================================
+PUT {{faqsUrl}}/00000000-0000-0000-0000-000000000000
+Content-Type: application/json
+
+{
+  "question": "Ghost"
+}
+
+
+### ============================================
+### 20. ADMIN — REORDER (bulk)
+### PATCH /api/faqs/reorder
+### Swap the order of two FAQs
+### ============================================
+PATCH {{faqsUrl}}/reorder
+Content-Type: application/json
+
+{
+  "items": [
+    { "id": "{{createFaq1.response.body.$.data.id}}", "order": 2 },
+    { "id": "{{createFaq2.response.body.$.data.id}}", "order": 1 },
+    { "id": "{{createFaq3.response.body.$.data.id}}", "order": 0 },
+    { "id": "{{createFaq4.response.body.$.data.id}}", "order": 3 }
+  ]
+}
+
+
+### ============================================
+### 21. PUBLIC — LIST (order changed)
+### ============================================
+GET {{faqsUrl}}
+
+
+### ============================================
+### 22. ADMIN — REORDER (invalid — empty array, expect 400)
+### ============================================
+PATCH {{faqsUrl}}/reorder
+Content-Type: application/json
+
+{
+  "items": []
+}
+
+
+### ============================================
+### 23. ADMIN — REORDER (invalid — missing order, expect 400)
+### ============================================
+PATCH {{faqsUrl}}/reorder
+Content-Type: application/json
+
+{
+  "items": [
+    { "id": "{{createFaq1.response.body.$.data.id}}" }
+  ]
+}
+
+
+### ============================================
+### 24. ADMIN — DELETE FAQ 4
+### DELETE /api/faqs/:id
+### Expected: 204
+### ============================================
+DELETE {{faqsUrl}}/{{createFaq4.response.body.$.data.id}}
+
+
+### ============================================
+### 25. PUBLIC — VERIFY GONE (404)
+### ============================================
+GET {{faqsUrl}}/{{createFaq4.response.body.$.data.id}}
+
+
+### ============================================
+### 26. ADMIN — DELETE AGAIN (expect 404)
+### ============================================
+DELETE {{faqsUrl}}/{{createFaq4.response.body.$.data.id}}
+
+
+### ============================================
+### 27. ADMIN — STATS AFTER DELETE
+### Expected: { total: 3, maxOrder: 3 }
+### ============================================
+GET {{faqsUrl}}/admin/stats
+
+
+### ============================================
+### 28. PUBLIC — FINAL LIST (3 FAQs)
+### ============================================
+GET {{faqsUrl}}
+
+
+### ============================================
+### 29. AUTH — LOGOUT
+### ============================================
+POST {{authUrl}}/logout

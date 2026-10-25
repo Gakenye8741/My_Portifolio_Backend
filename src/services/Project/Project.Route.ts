@@ -1,36 +1,69 @@
+// src/services/Project/project.route.ts
 import { Router } from "express";
 import {
-  getAllProjects,
-  getProjectById,
+  // public
+  listProjects,
   getProjectBySlug,
-  getProjectWithThumbnail,
+  // admin read
+  getProjectById,
+  getProjectStats,
+  // admin write
   createProject,
   updateProject,
+  toggleProjectFeatured,
+  updateProjectStatus,
   deleteProject,
+  restoreProject,
+  hardDeleteProject,
 } from "./Project.controller";
+import { requireAdmin } from "../../middlewares/bearAuth";
 
 export const ProjectsRoute = Router();
 
-// 📁 Project Routes (Base path: /api/projects)
+// ==========================================
+// PUBLIC
+// ==========================================
 
-// ✅ Get all projects -> GET /api/projects
-ProjectsRoute.get("/", getAllProjects);
+// GET /api/projects — list + filter + paginate
+ProjectsRoute.get("/", listProjects);
 
-// 🔗 Get project by Slug -> GET /api/projects/slug/:slug
-// Placing this BEFORE /:id ensures "slug" isn't mistaken for a UUID
+// GET /api/projects/slug/:slug — single project (increments view)
 ProjectsRoute.get("/slug/:slug", getProjectBySlug);
 
-// 🆔 Get project by ID -> GET /api/projects/:id
-ProjectsRoute.get("/:id", getProjectById);
+// ==========================================
+// ADMIN — READ (must be before /:id catch-all)
+// ==========================================
 
-// 🔍 Get project with full details -> GET /api/projects/:id/details
-ProjectsRoute.get("/:id/details", getProjectWithThumbnail);
+// GET /api/projects/admin/stats
+ProjectsRoute.get("/admin/stats", requireAdmin, getProjectStats);
 
-// ✍️ Create a new project -> POST /api/projects
-ProjectsRoute.post("/", createProject);
+// ==========================================
+// ADMIN — WRITE
+// ==========================================
 
-// 🔄 Update a project -> PUT /api/projects/:id
-ProjectsRoute.put("/:id", updateProject);
+// POST /api/projects
+ProjectsRoute.post("/", requireAdmin, createProject);
 
-// ❌ Delete a project -> DELETE /api/projects/:id
-ProjectsRoute.delete("/:id", deleteProject);
+// PUT /api/projects/:id
+ProjectsRoute.put("/:id", requireAdmin, updateProject);
+
+// PATCH /api/projects/:id/featured
+ProjectsRoute.patch("/:id/featured", requireAdmin, toggleProjectFeatured);
+
+// PATCH /api/projects/:id/status
+ProjectsRoute.patch("/:id/status", requireAdmin, updateProjectStatus);
+
+// DELETE /api/projects/:id — soft delete
+ProjectsRoute.delete("/:id", requireAdmin, deleteProject);
+
+// POST /api/projects/:id/restore
+ProjectsRoute.post("/:id/restore", requireAdmin, restoreProject);
+
+// DELETE /api/projects/:id/hard — permanent
+ProjectsRoute.delete("/:id/hard", requireAdmin, hardDeleteProject);
+
+// ==========================================
+// ADMIN — GET BY ID (LAST — catch-all)
+// ==========================================
+// Placed at the bottom so `/admin/stats` etc. match first
+ProjectsRoute.get("/:id", requireAdmin, getProjectById);

@@ -1,0 +1,307 @@
+### ============================================
+### SERVICES API — REST Client Tests
+### ============================================
+@baseUrl = http://localhost:5000/api
+@authUrl = {{baseUrl}}/auth
+@servicesUrl = {{baseUrl}}/services
+
+@email = brayogakenye04@gmail.com
+@password = hunter2hunter2
+
+
+### ============================================
+### 0. LOGIN (must run first — stores session cookie)
+### ============================================
+# @name login
+POST {{authUrl}}/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+
+### ============================================
+### 1. PUBLIC — LIST SERVICES (empty initially)
+### GET /api/services
+### ============================================
+GET {{servicesUrl}}
+
+
+### ============================================
+### 2. ADMIN — CREATE SERVICE (happy path, no techs)
+### POST /api/services
+### Expected: 201 { data: { id, title, slug, pricingType, ... } }
+### ============================================
+# @name createService
+POST {{servicesUrl}}
+Content-Type: application/json
+
+{
+  "title": "Backend Development",
+  "description": "I build production-grade REST APIs with Node.js, Express, PostgreSQL, and Drizzle ORM. Includes authentication, session management, role-based access control, and deployment.",
+  "iconName": "Server",
+  "pricingType": "contact",
+  "isAvailable": true
+}
+
+
+### ============================================
+### 3. ADMIN — CREATE SECOND SERVICE
+### ============================================
+# @name createService2
+POST {{servicesUrl}}
+Content-Type: application/json
+
+{
+  "title": "Full-Stack Development",
+  "description": "End-to-end web applications with React, TypeScript, Node.js, and PostgreSQL. From database schema to pixel-perfect UI — I handle the whole stack.",
+  "iconName": "Layers",
+  "pricingType": "fixed",
+  "isAvailable": true
+}
+
+
+### ============================================
+### 4. ADMIN — CREATE THIRD SERVICE (hourly)
+### ============================================
+# @name createService3
+POST {{servicesUrl}}
+Content-Type: application/json
+
+{
+  "title": "Code Review & Consulting",
+  "description": "Deep code reviews for your existing Node.js / TypeScript projects. I'll audit architecture, security, performance, and suggest concrete improvements.",
+  "iconName": "Search",
+  "pricingType": "hourly",
+  "isAvailable": true
+}
+
+
+### ============================================
+### 5. ADMIN — CREATE (missing title, expect 400)
+### ============================================
+POST {{servicesUrl}}
+Content-Type: application/json
+
+{
+  "description": "Service without a title should fail validation."
+}
+
+
+### ============================================
+### 6. ADMIN — CREATE (missing description, expect 400)
+### ============================================
+POST {{servicesUrl}}
+Content-Type: application/json
+
+{
+  "title": "Title Only"
+}
+
+
+### ============================================
+### 7. ADMIN — CREATE (invalid pricingType, expect 400)
+### ============================================
+POST {{servicesUrl}}
+Content-Type: application/json
+
+{
+  "title": "Bad Pricing",
+  "description": "This service has an invalid pricing type.",
+  "pricingType": "free"
+}
+
+
+### ============================================
+### 8. ADMIN — CREATE (title too long, expect 400)
+### ============================================
+POST {{servicesUrl}}
+Content-Type: application/json
+
+{
+  "title": "This title is way too long and exceeds the maximum allowed length of one hundred characters which should be rejected by validation",
+  "description": "Some description."
+}
+
+
+### ============================================
+### 9. ADMIN — CREATE (duplicate title → auto-suffixed slug)
+### ============================================
+# @name createDuplicate
+POST {{servicesUrl}}
+Content-Type: application/json
+
+{
+  "title": "Backend Development",
+  "description": "Same title, different description. Slug should become backend-development-2."
+}
+
+
+### ============================================
+### 10. PUBLIC — LIST ALL (5 services now)
+### ============================================
+GET {{servicesUrl}}
+
+
+### ============================================
+### 11. PUBLIC — LIST FILTERED BY PRICING = hourly
+### ============================================
+GET {{servicesUrl}}?pricingType=hourly
+
+
+### ============================================
+### 12. PUBLIC — LIST AVAILABLE ONLY
+### ============================================
+GET {{servicesUrl}}?isAvailable=true
+
+
+### ============================================
+### 13. PUBLIC — SEARCH "review"
+### ============================================
+GET {{servicesUrl}}?search=review
+
+
+### ============================================
+### 14. PUBLIC — SORT BY TITLE ASC
+### ============================================
+GET {{servicesUrl}}?sortBy=title&sortOrder=asc
+
+
+### ============================================
+### 15. PUBLIC — LIST (invalid pricingType, expect 400)
+### ============================================
+GET {{servicesUrl}}?pricingType=garbage
+
+
+### ============================================
+### 16. PUBLIC — GET BY SLUG
+### GET /api/services/slug/:slug
+### ============================================
+# @name getServiceBySlug
+GET {{servicesUrl}}/slug/{{createService.response.body.$.data.slug}}
+
+
+### ============================================
+### 17. PUBLIC — GET BY SLUG (nonexistent, expect 404)
+### ============================================
+GET {{servicesUrl}}/slug/this-does-not-exist
+
+
+### ============================================
+### 18. PUBLIC — BULK GET BY IDS
+### GET /api/services/bulk?ids=id1,id2
+### ============================================
+GET {{servicesUrl}}/bulk?ids={{createService.response.body.$.data.id}},{{createService2.response.body.$.data.id}}
+
+
+### ============================================
+### 19. PUBLIC — BULK GET (no ids, expect 400)
+### ============================================
+GET {{servicesUrl}}/bulk
+
+
+### ============================================
+### 20. ADMIN — GET BY ID
+### GET /api/services/:id
+### ============================================
+GET {{servicesUrl}}/{{createService.response.body.$.data.id}}
+
+
+### ============================================
+### 21. ADMIN — GET BY ID (nonexistent, expect 404)
+### ============================================
+GET {{servicesUrl}}/00000000-0000-0000-0000-000000000000
+
+
+### ============================================
+### 22. ADMIN — UPDATE (title + description)
+### PUT /api/services/:id
+### ============================================
+PUT {{servicesUrl}}/{{createService.response.body.$.data.id}}
+Content-Type: application/json
+
+{
+  "title": "Backend Development & Architecture",
+  "description": "I design and build production-grade backends: REST APIs, authentication, databases, deployment, monitoring. From greenfield to scaling existing systems."
+}
+
+
+### ============================================
+### 23. ADMIN — UPDATE (invalid pricingType, expect 400)
+### ============================================
+PUT {{servicesUrl}}/{{createService.response.body.$.data.id}}
+Content-Type: application/json
+
+{
+  "pricingType": "free"
+}
+
+
+### ============================================
+### 24. ADMIN — UPDATE (nonexistent id, expect 404)
+### ============================================
+PUT {{servicesUrl}}/00000000-0000-0000-0000-000000000000
+Content-Type: application/json
+
+{
+  "title": "Ghost"
+}
+
+
+### ============================================
+### 25. ADMIN — TOGGLE AVAILABILITY (true → false)
+### PATCH /api/services/:id/availability
+### ============================================
+PATCH {{servicesUrl}}/{{createService.response.body.$.data.id}}/availability
+
+
+### ============================================
+### 26. PUBLIC — LIST AVAILABLE (this service should disappear)
+### ============================================
+GET {{servicesUrl}}?isAvailable=true
+
+
+### ============================================
+### 27. ADMIN — TOGGLE AVAILABILITY AGAIN (false → true)
+### ============================================
+PATCH {{servicesUrl}}/{{createService.response.body.$.data.id}}/availability
+
+
+### ============================================
+### 28. PUBLIC — LIST AVAILABLE (back)
+### ============================================
+GET {{servicesUrl}}?isAvailable=true
+
+
+### ============================================
+### 29. ADMIN — DELETE SERVICE
+### DELETE /api/services/:id
+### Expected: 204
+### ============================================
+DELETE {{servicesUrl}}/{{createService3.response.body.$.data.id}}
+
+
+### ============================================
+### 30. PUBLIC — LIST (service 3 gone)
+### ============================================
+GET {{servicesUrl}}
+
+
+### ============================================
+### 31. ADMIN — DELETE AGAIN (expect 404)
+### ============================================
+DELETE {{servicesUrl}}/{{createService3.response.body.$.data.id}}
+
+
+### ============================================
+### 32. ADMIN — DELETE DUPLICATE (cleanup)
+### ============================================
+DELETE {{servicesUrl}}/{{createDuplicate.response.body.$.data.id}}
+
+
+### ============================================
+### 33. AUTH — LOGOUT
+### ============================================
+POST {{authUrl}}/logout

@@ -1,0 +1,332 @@
+### ============================================
+### CONTACT API — REST Client Tests
+### ============================================
+@baseUrl = http://localhost:5000/api
+@authUrl = {{baseUrl}}/auth
+@contactUrl = {{baseUrl}}/contact
+@messagesUrl = {{baseUrl}}/messages
+
+@email = brayogakenye04@gmail.com
+@password = hunter2hunter2
+
+
+### ============================================
+### 0. LOGIN (must run first — stores session cookie)
+### ============================================
+# @name login
+POST {{authUrl}}/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+
+### ============================================
+### 1. PUBLIC — SUBMIT CONTACT FORM (expect 201)
+### POST /api/contact
+### ============================================
+# @name submitContact
+POST {{contactUrl}}
+Content-Type: application/json
+
+{
+  "name": "John Recruiter",
+  "email": "john@example.com",
+  "subject": "Opportunity at Acme Corp",
+  "message": "Hi Gakenye, I came across your portfolio and I'm really impressed with the PERN stack backend you built. We're hiring a senior backend engineer at Acme Corp and I'd love to chat about it. Let me know if you're open to a quick call this week."
+}
+
+
+### ============================================
+### 2. PUBLIC — SUBMIT (missing name, expect 400)
+### ============================================
+POST {{contactUrl}}
+Content-Type: application/json
+
+{
+  "email": "someone@example.com",
+  "message": "Hello there, this is a message."
+}
+
+
+### ============================================
+### 3. PUBLIC — SUBMIT (missing email, expect 400)
+### ============================================
+POST {{contactUrl}}
+Content-Type: application/json
+
+{
+  "name": "No Email",
+  "message": "Hello there, this is a message."
+}
+
+
+### ============================================
+### 4. PUBLIC — SUBMIT (invalid email, expect 400)
+### ============================================
+POST {{contactUrl}}
+Content-Type: application/json
+
+{
+  "name": "Bad Email",
+  "email": "not-an-email",
+  "message": "This should fail email validation."
+}
+
+
+### ============================================
+### 5. PUBLIC — SUBMIT (missing message, expect 400)
+### ============================================
+POST {{contactUrl}}
+Content-Type: application/json
+
+{
+  "name": "No Message",
+  "email": "nomsg@example.com"
+}
+
+
+### ============================================
+### 6. PUBLIC — SUBMIT (message too short, expect 400)
+### ============================================
+POST {{contactUrl}}
+Content-Type: application/json
+
+{
+  "name": "Shorty",
+  "email": "shorty@example.com",
+  "message": "hi"
+}
+
+
+### ============================================
+### 7. PUBLIC — SUBMIT (subject missing — optional, expect 201)
+### ============================================
+# @name submitNoSubject
+POST {{contactUrl}}
+Content-Type: application/json
+
+{
+  "name": "No Subject",
+  "email": "nosubject@example.com",
+  "message": "This submission has no subject field. It should still work since subject is optional."
+}
+
+
+### ============================================
+### 8. ADMIN — LIST MESSAGES (expect 200)
+### GET /api/messages
+### ============================================
+GET {{messagesUrl}}
+
+
+### ============================================
+### 9. ADMIN — LIST FILTERED BY STATUS=new (expect 200)
+### ============================================
+GET {{messagesUrl}}?status=new
+
+
+### ============================================
+### 10. ADMIN — LIST WITH SEARCH
+### ============================================
+GET {{messagesUrl}}?search=recruiter
+
+
+### ============================================
+### 11. ADMIN — LIST SORTED BY DATE ASC
+### ============================================
+GET {{messagesUrl}}?sortBy=createdAt&sortOrder=asc
+
+
+### ============================================
+### 12. ADMIN — LIST (invalid status, expect 400)
+### ============================================
+GET {{messagesUrl}}?status=garbage
+
+
+### ============================================
+### 13. ADMIN — LIST (invalid sortBy, expect 400)
+### ============================================
+GET {{messagesUrl}}?sortBy=garbage
+
+
+### ============================================
+### 14. ADMIN — STATS (expect 200)
+### GET /api/messages/admin/stats
+### ============================================
+GET {{messagesUrl}}/admin/stats
+
+
+### ============================================
+### 15. ADMIN — GET MESSAGE BY ID (expect 200)
+### GET /api/messages/:id
+### ============================================
+# @name getMessage
+GET {{messagesUrl}}/{{submitContact.response.body.$.data.id}}
+
+
+### ============================================
+### 16. ADMIN — GET BY ID (nonexistent, expect 404)
+### ============================================
+GET {{messagesUrl}}/00000000-0000-0000-0000-000000000000
+
+
+### ============================================
+### 17. ADMIN — MARK AS READ (expect 200)
+### PUT /api/messages/:id/read
+### ============================================
+PUT {{messagesUrl}}/{{submitContact.response.body.$.data.id}}/read
+
+
+### ============================================
+### 18. ADMIN — VERIFY STATUS=read
+### ============================================
+GET {{messagesUrl}}/{{submitContact.response.body.$.data.id}}
+
+
+### ============================================
+### 19. ADMIN — MARK AS READ AGAIN (idempotent, expect 200)
+### ============================================
+PUT {{messagesUrl}}/{{submitContact.response.body.$.data.id}}/read
+
+
+### ============================================
+### 20. ADMIN — MARK AS REPLIED (expect 200)
+### PUT /api/messages/:id/replied
+### ============================================
+PUT {{messagesUrl}}/{{submitContact.response.body.$.data.id}}/replied
+
+
+### ============================================
+### 21. ADMIN — VERIFY STATUS=replied + repliedAt set
+### ============================================
+GET {{messagesUrl}}/{{submitContact.response.body.$.data.id}}
+
+
+### ============================================
+### 22. ADMIN — TRY MARK READ AFTER REPLY (should NOT downgrade)
+### ============================================
+PUT {{messagesUrl}}/{{submitContact.response.body.$.data.id}}/read
+
+
+### ============================================
+### 23. ADMIN — VERIFY STILL replied (not downgraded)
+### ============================================
+GET {{messagesUrl}}/{{submitContact.response.body.$.data.id}}
+
+
+### ============================================
+### 24. ADMIN — UPDATE STATUS via generic endpoint → archived
+### PUT /api/messages/:id/status
+### ============================================
+PUT {{messagesUrl}}/{{submitContact.response.body.$.data.id}}/status
+Content-Type: application/json
+
+{
+  "status": "archived"
+}
+
+
+### ============================================
+### 25. ADMIN — UPDATE STATUS (invalid, expect 400)
+### ============================================
+PUT {{messagesUrl}}/{{submitContact.response.body.$.data.id}}/status
+Content-Type: application/json
+
+{
+  "status": "garbage"
+}
+
+
+### ============================================
+### 26. ADMIN — LIST ARCHIVED ONLY
+### ============================================
+GET {{messagesUrl}}?status=archived
+
+
+### ============================================
+### 27. ADMIN — STATS AFTER WORKFLOW (counts updated)
+### ============================================
+GET {{messagesUrl}}/admin/stats
+
+
+### ============================================
+### 28. ADMIN — DELETE MESSAGE (expect 204)
+### DELETE /api/messages/:id
+### ============================================
+DELETE {{messagesUrl}}/{{submitContact.response.body.$.data.id}}
+
+
+### ============================================
+### 29. ADMIN — VERIFY GONE (expect 404)
+### ============================================
+GET {{messagesUrl}}/{{submitContact.response.body.$.data.id}}
+
+
+### ============================================
+### 30. ADMIN — DELETE AGAIN (expect 404)
+### ============================================
+DELETE {{messagesUrl}}/{{submitContact.response.body.$.data.id}}
+
+
+### ============================================
+### 31. PUBLIC — SUBMIT AGAIN (fresh message for rate-limit test prep)
+### ============================================
+POST {{contactUrl}}
+Content-Type: application/json
+
+{
+  "name": "Second Test",
+  "email": "second@example.com",
+  "subject": "Another inquiry",
+  "message": "This is a second message to test the workflow."
+}
+
+
+### ============================================
+### 32. RATE LIMIT TEST — HIT 4 MORE TIMES
+### (You've already sent 5+ in this session — the next ones should fail)
+### If you're in a fresh session, run these 5 times; the 6th will 429.
+### ============================================
+POST {{contactUrl}}
+Content-Type: application/json
+
+{
+  "name": "Rate Test 1",
+  "email": "r1@test.com",
+  "message": "Testing rate limit behavior."
+}
+
+
+### ============================================
+### 33. RATE LIMIT — second
+### ============================================
+POST {{contactUrl}}
+Content-Type: application/json
+
+{
+  "name": "Rate Test 2",
+  "email": "r2@test.com",
+  "message": "Testing rate limit behavior."
+}
+
+
+### ============================================
+### 34. RATE LIMIT — third (expect 429 if limit hit)
+### ============================================
+POST {{contactUrl}}
+Content-Type: application/json
+
+{
+  "name": "Rate Test 3",
+  "email": "r3@test.com",
+  "message": "Testing rate limit behavior."
+}
+
+
+### ============================================
+### 35. AUTH — LOGOUT
+### ============================================
+POST {{authUrl}}/logout

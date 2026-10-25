@@ -1,77 +1,326 @@
-### Variables
+### ============================================
+### PROJECTS API — REST Client Tests
+### ============================================
 @baseUrl = http://localhost:5000/api
-@projectSlug = my-awesome-portfolio
-# After you run the POST request, copy the ID from the response and paste it here
-@projectId = 522fec17-4643-4ba9-91f3-2685afe67b63
-# A valid UUID from your media_assets table
-@thumbnailId = 43cd75b2-31db-42f2-b1e8-9cb4acf2511d
+@authUrl = {{baseUrl}}/auth
+@projectsUrl = {{baseUrl}}/projects
 
-// ==========================================
-// 1. PROJECT RETRIEVAL
-// ==========================================
+@email = brayogakenye04@gmail.com
+@password = hunter2hunter2
 
-### ✅ Get All Projects
-# Maps to: GET /api/projects/
-GET {{baseUrl}}/projects
-Content-Type: application/json
+@projectId = {{createProject.response.body.$.data.id}}
+@projectSlug = portfolio-backend-api-v2
 
 
-
-### 🔗 Get Project By Slug
-# Maps to: GET /api/projects/slug/:slug
-# This also increments the view count in the background
-GET {{baseUrl}}/projects/slug/{{projectSlug}}
-Content-Type: application/json
-
-
-
-### 🆔 Get Project By ID
-# Maps to: GET /api/projects/:id
-GET {{baseUrl}}/projects/{{projectId}}
-Content-Type: application/json
-
-
-
-### 🔍 Get Project with Thumbnail Details
-# Maps to: GET /api/projects/:id/details
-GET {{baseUrl}}/projects/{{projectId}}/details
-Content-Type: application/json
-
-
-// ==========================================
-// 2. PROJECT MANAGEMENT (ADMIN)
-// ==========================================
-
-### ✍️ Create New Project: Real-Time Analytics Dashboard
-# Maps to: POST /api/projects/
-POST {{baseUrl}}/projects
+### ============================================
+### 0. LOGIN (must run first — stores session cookie)
+### ============================================
+# @name login
+POST {{authUrl}}/login
 Content-Type: application/json
 
 {
-  "title": "Nexus Insight: AI Analytics Engine",
-  "slug": "nexus-insight-ai-engine",
-  "mainDescription": "A sophisticated data visualization platform leveraging Node.js for real-time processing. Built with Drizzle ORM for type-safe database interactions and utilizing UUID v4 for secure, non-sequential resource identification.",
-  "mainThumbnailId": "{{thumbnailId}}",
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+
+### ============================================
+### 1. PUBLIC — LIST PROJECTS (empty list initially)
+### GET /api/projects
+### ============================================
+GET {{projectsUrl}}
+
+
+### ============================================
+### 2. PUBLIC — LIST WITH FILTERS
+### GET /api/projects?status=published&featured=true&limit=5&page=1
+### ============================================
+GET {{projectsUrl}}?status=published&featured=true&limit=5&page=1
+
+
+### ============================================
+### 3. PUBLIC — SEARCH
+### GET /api/projects?search=react
+### ============================================
+GET {{projectsUrl}}?search=react
+
+
+### ============================================
+### 4. PUBLIC — SORT BY VIEWS
+### GET /api/projects?sortBy=viewCount&sortOrder=desc
+### ============================================
+GET {{projectsUrl}}?sortBy=viewCount&sortOrder=desc
+
+
+### ============================================
+### 5. PUBLIC — INVALID FILTER (expect 400)
+### GET /api/projects?status=garbage
+### ============================================
+GET {{projectsUrl}}?status=garbage
+
+
+### ============================================
+### 6. ADMIN — CREATE PROJECT (expect 201)
+### POST /api/projects
+### ============================================
+# @name createProject
+POST {{projectsUrl}}
+Content-Type: application/json
+
+{
+  "title": "Portfolio Backend API",
+  "mainDescription": "A production-grade PERN stack backend with auth, sessions, projects, posts, and analytics.",
   "status": "published",
-  "isFeatured": true
+  "isFeatured": true,
+  "links": [
+    {
+      "label": "GitHub",
+      "url": "https://github.com/gakenye/portfolio-backend",
+      "type": "github_fullstack"
+    },
+    {
+      "label": "Live Demo",
+      "url": "https://gakenye-ndiritu.co.ke",
+      "type": "live_demo"
+    }
+  ],
+  "sections": [
+    {
+      "sectionTitle": "Overview",
+      "explanation": "This is a full PERN stack backend powering my portfolio website.",
+      "order": 0
+    },
+    {
+      "sectionTitle": "Tech Stack",
+      "explanation": "PostgreSQL, Express, React, Node.js, Drizzle ORM.",
+      "order": 1
+    }
+  ],
+  "timeline": [
+    {
+      "title": "Started",
+      "description": "Kicked off the project"
+    },
+    {
+      "title": "Auth complete",
+      "description": "Sessions + bcrypt working"
+    }
+  ]
 }
 
 
-
-### 🔄 Update Project
-# Maps to: PUT /api/projects/:id
-PUT {{baseUrl}}/projects/{{projectId}}
+### ============================================
+### 7. ADMIN — CREATE (missing title, expect 400)
+### ============================================
+POST {{projectsUrl}}
 Content-Type: application/json
 
 {
-  "title": "Updated Portfolio Title",
-  "isFeatured": false,
-  "status": "archived"
+  "mainDescription": "No title provided"
 }
 
 
-
-### ❌ Delete Project
-# Maps to: DELETE /api/projects/:id
-DELETE {{baseUrl}}/projects/{{projectId}}
+### ============================================
+### 8. ADMIN — CREATE (invalid URL, expect 400)
+### ============================================
+POST {{projectsUrl}}
 Content-Type: application/json
+
+{
+  "title": "Bad URLs",
+  "mainDescription": "Test invalid link",
+  "links": [
+    { "label": "Broken", "url": "not-a-url" }
+  ]
+}
+
+
+### ============================================
+### 9. PUBLIC — GET BY SLUG (expect 200, view++)
+### GET /api/projects/slug/:slug
+### ============================================
+GET {{projectsUrl}}/slug/{{projectSlug}}
+
+
+### ============================================
+### 10. PUBLIC — GET BY SLUG (nonexistent, expect 404)
+### ============================================
+GET {{projectsUrl}}/slug/this-does-not-exist
+
+
+### ============================================
+### 11. ADMIN — GET BY ID (expect 200)
+### GET /api/projects/:id
+### ============================================
+GET {{projectsUrl}}/{{projectId}}
+
+
+### ============================================
+### 12. ADMIN — GET BY ID (without cookie, expect 401)
+### ============================================
+# Run this AFTER logging out — or comment out the cookie
+GET {{projectsUrl}}/{{projectId}}
+
+
+### ============================================
+### 13. ADMIN — STATS (expect 200)
+### GET /api/projects/admin/stats
+### ============================================
+GET {{projectsUrl}}/admin/stats
+
+
+### ============================================
+### 14. ADMIN — UPDATE (expect 200)
+### PUT /api/projects/:id
+### ============================================
+PUT {{projectsUrl}}/{{projectId}}
+Content-Type: application/json
+
+{
+  "title": "Portfolio Backend API (v2)",
+  "mainDescription": "Updated description. Now with analytics and SEO."
+}
+
+
+### ============================================
+### 15. ADMIN — UPDATE (nonexistent id, expect 404)
+### ============================================
+PUT {{projectsUrl}}/00000000-0000-0000-0000-000000000000
+Content-Type: application/json
+
+{
+  "title": "Ghost"
+}
+
+
+### ============================================
+### 16. ADMIN — TOGGLE FEATURED (expect 200)
+### PATCH /api/projects/:id/featured
+### ============================================
+PATCH {{projectsUrl}}/{{projectId}}/featured
+
+
+### ============================================
+### 17. ADMIN — TOGGLE FEATURED AGAIN (back to original)
+### ============================================
+PATCH {{projectsUrl}}/{{projectId}}/featured
+
+
+### ============================================
+### 18. ADMIN — UPDATE STATUS → draft (expect 200)
+### PATCH /api/projects/:id/status
+### ============================================
+PATCH {{projectsUrl}}/{{projectId}}/status
+Content-Type: application/json
+
+{
+  "status": "draft"
+}
+
+
+### ============================================
+### 19. PUBLIC — LIST (draft should NOT appear)
+### ============================================
+GET {{projectsUrl}}
+
+
+### ============================================
+### 20. ADMIN — LIST WITH includeDeleted=true
+### ============================================
+GET {{projectsUrl}}?includeDeleted=true
+
+
+### ============================================
+### 21. ADMIN — UPDATE STATUS back → published
+### ============================================
+PATCH {{projectsUrl}}/{{projectId}}/status
+Content-Type: application/json
+
+{
+  "status": "published"
+}
+
+
+### ============================================
+### 22. PUBLIC — LIST (published reappears)
+### ============================================
+GET {{projectsUrl}}
+
+
+### ============================================
+### 23. ADMIN — SOFT DELETE (expect 204)
+### DELETE /api/projects/:id
+### ============================================
+DELETE {{projectsUrl}}/{{projectId}}
+
+
+### ============================================
+### 24. PUBLIC — LIST (deleted gone)
+### ============================================
+GET {{projectsUrl}}
+
+
+### ============================================
+### 25. PUBLIC — GET BY SLUG (deleted → 404)
+### ============================================
+GET {{projectsUrl}}/slug/{{projectSlug}}
+
+
+### ============================================
+### 26. ADMIN — RESTORE (expect 200)
+### POST /api/projects/:id/restore
+### ============================================
+POST {{projectsUrl}}/{{projectId}}/restore
+
+
+### ============================================
+### 27. PUBLIC — LIST (restored reappears)
+### ============================================
+GET {{projectsUrl}}
+
+
+### ============================================
+### 28. ADMIN — HARD DELETE (expect 204)
+### DELETE /api/projects/:id/hard
+### ============================================
+DELETE {{projectsUrl}}/{{projectId}}/hard
+
+
+### ============================================
+### 29. ADMIN — GET BY ID after hard delete (expect 404)
+### ============================================
+GET {{projectsUrl}}/{{projectId}}
+
+
+### ============================================
+### 30. AUTH — LOGOUT (clean up session)
+### ============================================
+POST {{authUrl}}/logout
+
+### GET /api/projects/slug/portfolio-backend-api
+GET {{projectsUrl}}/slug/portfolio-backend-api
+
+### Replace project links
+PUT {{projectsUrl}}/{{projectId}}
+Content-Type: application/json
+
+{
+  "links": [
+    {
+      "label": "GitHub",
+      "url": "https://github.com/gakenye/portfolio-backend-v2",
+      "type": "github_fullstack"
+    },
+    {
+      "label": "API Docs",
+      "url": "https://docs.gakenye-ndiritu.co.ke",
+      "type": "documentation"
+    },
+    {
+      "label": "Figma Design",
+      "url": "https://figma.com/file/xyz",
+      "type": "design"
+    }
+  ]
+}

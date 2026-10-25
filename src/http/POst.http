@@ -1,0 +1,458 @@
+### ============================================
+### POSTS (BLOG) API — REST Client Tests
+### ============================================
+@baseUrl = http://localhost:5000/api
+@authUrl = {{baseUrl}}/auth
+@postsUrl = {{baseUrl}}/posts
+@mediaUrl = {{baseUrl}}/media
+
+@email = brayogakenye04@gmail.com
+@password = hunter2hunter2
+@visitorId = test-visitor-001
+
+
+### ============================================
+### 0. LOGIN (must run first — stores session cookie)
+### ============================================
+# @name login
+POST {{authUrl}}/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+
+### ============================================
+### 1. PUBLIC — LIST POSTS (empty initially)
+### GET /api/posts
+### ============================================
+GET {{postsUrl}}
+
+
+### ============================================
+### 2. ADMIN — CREATE POST (published, with tags)
+### POST /api/posts
+### Expected: 201 { data: {...with tags, author, revision} }
+### ============================================
+# @name createPost
+POST {{postsUrl}}
+Content-Type: application/json
+
+{
+  "title": "Building a Production-Grade PERN Backend",
+  "content": "This is a deep dive into how I built a production-grade backend for my portfolio using PostgreSQL, Express, React, and Node.js. I'll walk through authentication, session management, role-based access control, media handling, and more. The goal was to demonstrate real-world backend engineering practices — not just a toy CRUD app.",
+  "excerpt": "A deep dive into building a production-grade PERN stack backend for a portfolio website.",
+  "readingTime": 8,
+  "isPublished": true,
+  "isFeatured": true,
+  "tagSlugs": ["react", "nodejs", "postgresql", "drizzle"]
+}
+
+
+### ============================================
+### 3. ADMIN — CREATE (draft, no tags)
+### ============================================
+# @name createDraft
+POST {{postsUrl}}
+Content-Type: application/json
+
+{
+  "title": "Draft Post — Work In Progress",
+  "content": "This is a draft post that should not appear in the public list. It's a work in progress and needs more content before publishing. But it should still exist for the admin to edit.",
+  "isPublished": false
+}
+
+
+### ============================================
+### 4. ADMIN — CREATE (missing title, expect 400)
+### ============================================
+POST {{postsUrl}}
+Content-Type: application/json
+
+{
+  "content": "Content without a title should fail validation."
+}
+
+
+### ============================================
+### 5. ADMIN — CREATE (missing content, expect 400)
+### ============================================
+POST {{postsUrl}}
+Content-Type: application/json
+
+{
+  "title": "Title without content"
+}
+
+
+### ============================================
+### 6. ADMIN — CREATE (invalid readingTime, expect 400)
+### ============================================
+POST {{postsUrl}}
+Content-Type: application/json
+
+{
+  "title": "Bad Reading Time",
+  "content": "Some content here.",
+  "readingTime": -5
+}
+
+
+### ============================================
+### 7. ADMIN — CREATE (duplicate title → auto-suffixed slug)
+### ============================================
+# @name createDuplicate
+POST {{postsUrl}}
+Content-Type: application/json
+
+{
+  "title": "Building a Production-Grade PERN Backend",
+  "content": "Same title, different content. Slug should be auto-suffixed with -2.",
+  "isPublished": true
+}
+
+
+### ============================================
+### 8. PUBLIC — LIST PUBLISHED (2 posts + 1 duplicate, no draft)
+### ============================================
+GET {{postsUrl}}?status=published
+
+
+### ============================================
+### 9. PUBLIC — LIST FEATURED
+### ============================================
+GET {{postsUrl}}?featured=true
+
+
+### ============================================
+### 10. PUBLIC — LIST BY TAG (react)
+### ============================================
+GET {{postsUrl}}?tagSlug=react
+
+
+### ============================================
+### 11. PUBLIC — SEARCH
+### ============================================
+GET {{postsUrl}}?search=production
+
+
+### ============================================
+### 12. PUBLIC — SORT BY VIEWS
+### ============================================
+GET {{postsUrl}}?sortBy=viewCount&sortOrder=desc
+
+
+### ============================================
+### 13. PUBLIC — INVALID FILTER (expect 400)
+### ============================================
+GET {{postsUrl}}?status=garbage
+
+
+### ============================================
+### 14. PUBLIC — GET BY SLUG (view++)
+### GET /api/posts/slug/:slug
+### ============================================
+# @name getPostBySlug
+GET {{postsUrl}}/slug/{{createPost.response.body.$.data.slug}}
+
+
+### ============================================
+### 15. PUBLIC — GET BY SLUG AGAIN (view++ again)
+### ============================================
+GET {{postsUrl}}/slug/{{createPost.response.body.$.data.slug}}
+
+
+### ============================================
+### 16. PUBLIC — GET BY SLUG (nonexistent, expect 404)
+### ============================================
+GET {{postsUrl}}/slug/this-post-does-not-exist
+
+
+### ============================================
+### 17. PUBLIC — ADD REACTION (like)
+### POST /api/posts/:id/reactions
+### Expected: 201 { data: {...}, counts: { like: 1 } }
+### ============================================
+POST {{postsUrl}}/{{createPost.response.body.$.data.id}}/reactions
+Content-Type: application/json
+
+{
+  "reaction": "like"
+}
+
+
+### ============================================
+### 18. PUBLIC — ADD REACTION (fire)
+### ============================================
+POST {{postsUrl}}/{{createPost.response.body.$.data.id}}/reactions
+Content-Type: application/json
+
+{
+  "reaction": "fire"
+}
+
+
+### ============================================
+### 19. PUBLIC — ADD REACTION (invalid, expect 400)
+### ============================================
+POST {{postsUrl}}/{{createPost.response.body.$.data.id}}/reactions
+Content-Type: application/json
+
+{
+  "reaction": "rocket"
+}
+
+
+### ============================================
+### 20. PUBLIC — GET REACTION COUNTS
+### GET /api/posts/:id/reactions
+### Expected: 200 { data: { like: 1, fire: 1 } }
+### ============================================
+GET {{postsUrl}}/{{createPost.response.body.$.data.id}}/reactions
+
+
+### ============================================
+### 21. PUBLIC — RATE POST (5 stars)
+### POST /api/posts/:id/ratings
+### Expected: 201 { data: {...}, summary: { avg: 5, count: 1 } }
+### ============================================
+POST {{postsUrl}}/{{createPost.response.body.$.data.id}}/ratings
+Content-Type: application/json
+
+{
+  "visitorId": "{{visitorId}}",
+  "rating": 5
+}
+
+
+### ============================================
+### 22. PUBLIC — RATE AGAIN (same visitor → updates, not duplicates)
+### ============================================
+POST {{postsUrl}}/{{createPost.response.body.$.data.id}}/ratings
+Content-Type: application/json
+
+{
+  "visitorId": "{{visitorId}}",
+  "rating": 4
+}
+
+
+### ============================================
+### 23. PUBLIC — RATE FROM SECOND VISITOR (3 stars)
+### ============================================
+POST {{postsUrl}}/{{createPost.response.body.$.data.id}}/ratings
+Content-Type: application/json
+
+{
+  "visitorId": "test-visitor-002",
+  "rating": 3
+}
+
+
+### ============================================
+### 24. PUBLIC — RATE (invalid rating, expect 400)
+### ============================================
+POST {{postsUrl}}/{{createPost.response.body.$.data.id}}/ratings
+Content-Type: application/json
+
+{
+  "visitorId": "test-visitor-003",
+  "rating": 10
+}
+
+
+### ============================================
+### 25. PUBLIC — GET RATINGS SUMMARY
+### Expected: avg ≈ 3.5, count: 2
+### ============================================
+GET {{postsUrl}}/{{createPost.response.body.$.data.id}}/ratings
+
+
+### ============================================
+### 26. ADMIN — GET BY ID
+### GET /api/posts/:id
+### ============================================
+GET {{postsUrl}}/{{createPost.response.body.$.data.id}}
+
+
+### ============================================
+### 27. ADMIN — UPDATE (title + content → creates revision #2)
+### PUT /api/posts/:id
+### ============================================
+PUT {{postsUrl}}/{{createPost.response.body.$.data.id}}
+Content-Type: application/json
+
+{
+  "title": "Building a Production-Grade PERN Backend (v2)",
+  "content": "UPDATED CONTENT: This is the revised deep dive into building a production-grade backend. I've added sections on rate limiting, audit logging, and deployment strategies. The blog is now even more detailed and production-focused."
+}
+
+
+### ============================================
+### 28. ADMIN — LIST REVISIONS (should have 2: create + update)
+### GET /api/posts/:id/revisions
+### ============================================
+GET {{postsUrl}}/{{createPost.response.body.$.data.id}}/revisions
+
+
+### ============================================
+### 29. ADMIN — UPDATE (only excerpt → NO new revision)
+### ============================================
+PUT {{postsUrl}}/{{createPost.response.body.$.data.id}}
+Content-Type: application/json
+
+{
+  "excerpt": "Updated excerpt only — this should not create a revision."
+}
+
+
+### ============================================
+### 30. ADMIN — LIST REVISIONS (still 2 — no change to title/content)
+### ============================================
+GET {{postsUrl}}/{{createPost.response.body.$.data.id}}/revisions
+
+
+### ============================================
+### 31. ADMIN — UPDATE (nonexistent id, expect 404)
+### ============================================
+PUT {{postsUrl}}/00000000-0000-0000-0000-000000000000
+Content-Type: application/json
+
+{
+  "title": "Ghost"
+}
+
+
+### ============================================
+### 32. ADMIN — REPLACE TAGS (remove react, add vue)
+### ============================================
+PUT {{postsUrl}}/{{createPost.response.body.$.data.id}}
+Content-Type: application/json
+
+{
+  "tagSlugs": ["vue", "nodejs", "postgresql"]
+}
+
+
+### ============================================
+### 33. PUBLIC — GET BY SLUG (verify tags updated)
+### ============================================
+GET {{postsUrl}}/slug/{{createPost.response.body.$.data.slug}}
+
+
+### ============================================
+### 34. ADMIN — TOGGLE FEATURED (true → false)
+### PATCH /api/posts/:id/featured
+### ============================================
+PATCH {{postsUrl}}/{{createPost.response.body.$.data.id}}/featured
+
+
+### ============================================
+### 35. ADMIN — TOGGLE FEATURED AGAIN (false → true)
+### ============================================
+PATCH {{postsUrl}}/{{createPost.response.body.$.data.id}}/featured
+
+
+### ============================================
+### 36. ADMIN — TOGGLE PUBLISH (published → draft)
+### PATCH /api/posts/:id/publish
+### ============================================
+PATCH {{postsUrl}}/{{createPost.response.body.$.data.id}}/publish
+
+
+### ============================================
+### 37. PUBLIC — LIST PUBLISHED (this post should disappear now)
+### ============================================
+GET {{postsUrl}}?status=published
+
+
+### ============================================
+### 38. PUBLIC — GET BY SLUG (still accessible if you know the slug)
+### ============================================
+GET {{postsUrl}}/slug/{{createPost.response.body.$.data.slug}}
+
+
+### ============================================
+### 39. ADMIN — TOGGLE PUBLISH BACK (draft → published)
+### ============================================
+PATCH {{postsUrl}}/{{createPost.response.body.$.data.id}}/publish
+
+
+### ============================================
+### 40. PUBLIC — LIST PUBLISHED (back)
+### ============================================
+GET {{postsUrl}}?status=published
+
+
+### ============================================
+### 41. ADMIN — STATS
+### GET /api/posts/admin/stats
+### ============================================
+GET {{postsUrl}}/admin/stats
+
+
+### ============================================
+### 42. ADMIN — SOFT DELETE
+### DELETE /api/posts/:id
+### Expected: 204
+### ============================================
+DELETE {{postsUrl}}/{{createPost.response.body.$.data.id}}
+
+
+### ============================================
+### 43. PUBLIC — LIST (deleted gone)
+### ============================================
+GET {{postsUrl}}
+
+
+### ============================================
+### 44. PUBLIC — GET BY SLUG (deleted → 404)
+### ============================================
+GET {{postsUrl}}/slug/{{createPost.response.body.$.data.slug}}
+
+
+### ============================================
+### 45. ADMIN — RESTORE
+### POST /api/posts/:id/restore
+### ============================================
+POST {{postsUrl}}/{{createPost.response.body.$.data.id}}/restore
+
+
+### ============================================
+### 46. PUBLIC — LIST (restored, back)
+### ============================================
+GET {{postsUrl}}
+
+
+### ============================================
+### 47. ADMIN — HARD DELETE (permanent)
+### DELETE /api/posts/:id/hard
+### Expected: 204
+### ============================================
+DELETE {{postsUrl}}/{{createPost.response.body.$.data.id}}/hard
+
+
+### ============================================
+### 48. ADMIN — GET BY ID after hard delete (expect 404)
+### ============================================
+GET {{postsUrl}}/{{createPost.response.body.$.data.id}}
+
+
+### ============================================
+### 49. ADMIN — DELETE DRAFT (cleanup)
+### ============================================
+DELETE {{postsUrl}}/{{createDraft.response.body.$.data.id}}
+
+
+### ============================================
+### 50. ADMIN — DELETE DUPLICATE (cleanup)
+### ============================================
+DELETE {{postsUrl}}/{{createDuplicate.response.body.$.data.id}}/hard
+
+
+### ============================================
+### 51. AUTH — LOGOUT
+### ============================================
+POST {{authUrl}}/logout

@@ -1,0 +1,339 @@
+### ============================================
+### SKILLS API — REST Client Tests
+### ============================================
+@baseUrl = http://localhost:5000/api
+@authUrl = {{baseUrl}}/auth
+@skillsUrl = {{baseUrl}}/skills
+@techUrl = {{baseUrl}}/technologies
+
+@email = brayogakenye04@gmail.com
+@password = hunter2hunter2
+
+# Real tech IDs from your DB
+@reactTechId = b965d3bf-bda3-4ff2-a345-faf334cdff12
+@bunTechId = 993184fb-53cf-4a94-945c-6899a7f5136d
+@svelteTechId = c0b36288-541c-4b4a-865c-c6977a01208d
+
+
+### ============================================
+### 0. LOGIN (must run first — stores session cookie)
+### ============================================
+# @name login
+POST {{authUrl}}/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+
+### ============================================
+### 1. PUBLIC — LIST SKILLS (empty initially)
+### GET /api/skills
+### ============================================
+GET {{skillsUrl}}
+
+
+### ============================================
+### 2. ADMIN — CREATE SKILL (React 90%, 4 yrs)
+### POST /api/skills
+### Expected: 201 { data: { id, techId, proficiency, technology: { name: "React", ... } } }
+### ============================================
+# @name createSkillReact
+POST {{skillsUrl}}
+Content-Type: application/json
+
+{
+  "techId": "{{reactTechId}}",
+  "proficiency": 90,
+  "yearsExperience": 4
+}
+
+
+### ============================================
+### 3. ADMIN — CREATE SKILL (Bun 75%, 2 yrs)
+### ============================================
+# @name createSkillBun
+POST {{skillsUrl}}
+Content-Type: application/json
+
+{
+  "techId": "{{bunTechId}}",
+  "proficiency": 75,
+  "yearsExperience": 2
+}
+
+
+### ============================================
+### 4. ADMIN — CREATE SKILL (Svelte 5 — 60%, 1 yr)
+### ============================================
+# @name createSkillSvelte
+POST {{skillsUrl}}
+Content-Type: application/json
+
+{
+  "techId": "{{svelteTechId}}",
+  "proficiency": 60,
+  "yearsExperience": 1
+}
+
+
+### ============================================
+### 5. ADMIN — CREATE (duplicate React, expect 400)
+### Same techId as #2 — should fail with "already exists"
+### ============================================
+POST {{skillsUrl}}
+Content-Type: application/json
+
+{
+  "techId": "{{reactTechId}}",
+  "proficiency": 95,
+  "yearsExperience": 5
+}
+
+
+### ============================================
+### 6. ADMIN — CREATE (missing techId, expect 400)
+### ============================================
+POST {{skillsUrl}}
+Content-Type: application/json
+
+{
+  "proficiency": 50
+}
+
+
+### ============================================
+### 7. ADMIN — CREATE (invalid proficiency 150, expect 400)
+### ============================================
+POST {{skillsUrl}}
+Content-Type: application/json
+
+{
+  "techId": "{{bunTechId}}",
+  "proficiency": 150
+}
+
+
+### ============================================
+### 8. ADMIN — CREATE (nonexistent techId, expect 400)
+### ============================================
+POST {{skillsUrl}}
+Content-Type: application/json
+
+{
+  "techId": "00000000-0000-0000-0000-000000000000",
+  "proficiency": 50
+}
+
+
+### ============================================
+### 9. ADMIN — CREATE (negative years, expect 400)
+### ============================================
+POST {{skillsUrl}}
+Content-Type: application/json
+
+{
+  "techId": "{{svelteTechId}}",
+  "proficiency": 50,
+  "yearsExperience": -3
+}
+
+
+### ============================================
+### 10. PUBLIC — LIST (should show 3 skills)
+### ============================================
+GET {{skillsUrl}}
+
+
+### ============================================
+### 11. PUBLIC — LIST FILTERED BY CATEGORY=frontend
+### ============================================
+GET {{skillsUrl}}?category=frontend
+
+
+### ============================================
+### 12. PUBLIC — LIST FILTERED BY CATEGORY=backend
+### ============================================
+GET {{skillsUrl}}?category=backend
+
+
+### ============================================
+### 13. PUBLIC — LIST FILTERED BY minProficiency=80
+### ============================================
+GET {{skillsUrl}}?minProficiency=80
+
+
+### ============================================
+### 14. PUBLIC — SEARCH "react"
+### ============================================
+GET {{skillsUrl}}?search=react
+
+
+### ============================================
+### 15. PUBLIC — SORT BY PROFICIENCY DESC
+### ============================================
+GET {{skillsUrl}}?sortBy=proficiency&sortOrder=desc
+
+
+### ============================================
+### 16. PUBLIC — SORT BY YEARS DESC
+### ============================================
+GET {{skillsUrl}}?sortBy=yearsExperience&sortOrder=desc
+
+
+### ============================================
+### 17. PUBLIC — SORT BY TECH NAME ASC
+### ============================================
+GET {{skillsUrl}}?sortBy=name&sortOrder=asc
+
+
+### ============================================
+### 18. PUBLIC — INVALID CATEGORY (expect 400)
+### ============================================
+GET {{skillsUrl}}?category=garbage
+
+
+### ============================================
+### 19. PUBLIC — INVALID minProficiency (expect 400)
+### ============================================
+GET {{skillsUrl}}?minProficiency=150
+
+
+### ============================================
+### 20. PUBLIC — GROUPED BY CATEGORY
+### GET /api/skills/grouped
+### Expected: { data: { frontend: [React, Svelte], backend: [Bun], ... } }
+### ============================================
+GET {{skillsUrl}}/grouped
+
+
+### ============================================
+### 21. PUBLIC — GET BY ID
+### GET /api/skills/:id
+### ============================================
+GET {{skillsUrl}}/{{createSkillReact.response.body.$.data.id}}
+
+
+### ============================================
+### 22. PUBLIC — GET BY ID (nonexistent, expect 404)
+### ============================================
+GET {{skillsUrl}}/00000000-0000-0000-0000-000000000000
+
+
+### ============================================
+### 23. PUBLIC — GET BY TECH ID (React)
+### GET /api/skills/by-tech/:techId
+### ============================================
+GET {{skillsUrl}}/by-tech/{{reactTechId}}
+
+
+### ============================================
+### 24. PUBLIC — GET BY TECH ID (no skill, expect 404)
+### ============================================
+GET {{skillsUrl}}/by-tech/00000000-0000-0000-0000-000000000000
+
+
+### ============================================
+### 25. ADMIN — UPDATE SKILL (React 90 → 95)
+### PUT /api/skills/:id
+### ============================================
+PUT {{skillsUrl}}/{{createSkillReact.response.body.$.data.id}}
+Content-Type: application/json
+
+{
+  "proficiency": 95,
+  "yearsExperience": 5
+}
+
+
+### ============================================
+### 26. ADMIN — UPDATE (invalid proficiency, expect 400)
+### ============================================
+PUT {{skillsUrl}}/{{createSkillReact.response.body.$.data.id}}
+Content-Type: application/json
+
+{
+  "proficiency": 150
+}
+
+
+### ============================================
+### 27. ADMIN — UPDATE (unknown field, expect 400)
+### ============================================
+PUT {{skillsUrl}}/{{createSkillReact.response.body.$.data.id}}
+Content-Type: application/json
+
+{
+  "techId": "should-not-be-allowed"
+}
+
+
+### ============================================
+### 28. ADMIN — UPDATE (nonexistent id, expect 404)
+### ============================================
+PUT {{skillsUrl}}/00000000-0000-0000-0000-000000000000
+Content-Type: application/json
+
+{
+  "proficiency": 50
+}
+
+
+### ============================================
+### 29. ADMIN — UPSERT BY TECH (Bun — existing → updates)
+### PUT /api/skills/by-tech/:techId
+### Updates Bun's skill from 75% to 85%
+### ============================================
+PUT {{skillsUrl}}/by-tech/{{bunTechId}}
+Content-Type: application/json
+
+{
+  "proficiency": 85,
+  "yearsExperience": 3
+}
+
+
+### ============================================
+### 30. PUBLIC — VERIFY UPSERT (Bun now 85%)
+### ============================================
+GET {{skillsUrl}}/by-tech/{{bunTechId}}
+
+
+### ============================================
+### 31. ADMIN — DELETE SKILL (Svelte)
+### DELETE /api/skills/:id
+### Expected: 204
+### ============================================
+DELETE {{skillsUrl}}/{{createSkillSvelte.response.body.$.data.id}}
+
+
+### ============================================
+### 32. PUBLIC — VERIFY GONE (404)
+### ============================================
+GET {{skillsUrl}}/{{createSkillSvelte.response.body.$.data.id}}
+
+
+### ============================================
+### 33. ADMIN — DELETE AGAIN (expect 404)
+### ============================================
+DELETE {{skillsUrl}}/{{createSkillSvelte.response.body.$.data.id}}
+
+
+### ============================================
+### 34. PUBLIC — FINAL LIST (React + Bun only)
+### ============================================
+GET {{skillsUrl}}
+
+
+### ============================================
+### 35. PUBLIC — FINAL GROUPED
+### ============================================
+GET {{skillsUrl}}/grouped
+
+
+### ============================================
+### 36. AUTH — LOGOUT
+### ============================================
+POST {{authUrl}}/logout

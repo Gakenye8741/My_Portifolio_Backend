@@ -1,80 +1,307 @@
-### Variables
+### ============================================
+### MEDIA API — REST Client Tests
+### ============================================
 @baseUrl = http://localhost:5000/api
+@authUrl = {{baseUrl}}/auth
+@mediaUrl = {{baseUrl}}/media
+@projectsUrl = {{baseUrl}}/projects
 
-# 1. First, Create a Media Asset and copy the ID from the response
-# 2. Paste that ID here:
-@mediaId = REPLACE_WITH_UUID_FROM_MEDIA_POST_RESPONSE
+@email = brayogakenye04@gmail.com
+@password = hunter2hunter2
 
-# 3. Use this slug for testing
-@projectSlug = my-pro-portfolio-2026
+# Real project IDs from your DB
+@projectId1 = 0345f081-f78b-4e51-83ad-c87ca043a191
+@projectId2 = b08668e6-b723-4b0d-8ccf-96542a60e9ef
 
-// ==========================================
-// 1. MEDIA ASSETS (Run this first!)
-// ==========================================
 
-### 🖼️ Create Media Asset
-# This provides the ID needed for the project thumbnail
-POST {{baseUrl}}/media
+### ============================================
+### 0. LOGIN (must run first — stores session cookie)
+### ============================================
+# @name login
+POST {{authUrl}}/login
 Content-Type: application/json
 
 {
-  "fileName": "Ai-thumbnail.png",
-  "fileUrl": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=1200",
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+
+### ============================================
+### 1. ADMIN — CREATE MEDIA (simulating Cloudinary upload result)
+### POST /api/media
+### Expected: 201 { data: { id, fileName, fileUrl, ... } }
+### ============================================
+# @name createMedia
+POST {{mediaUrl}}
+Content-Type: application/json
+
+{
+  "fileName": "portfolio-project-screenshot.png",
+  "fileUrl": "https://res.cloudinary.com/demo/image/upload/v1234567890/sample.png",
   "fileType": "image/png",
-  "fileSize": 102400
+  "fileSize": 145200,
+  "publicId": "portfolio/project-screenshot-1"
 }
 
 
-### 📂 Get All Media Assets
-GET {{baseUrl}}/media
-Content-Type: application/json
-
-
-// ==========================================
-// 2. PROJECT SYSTEM
-// ==========================================
-
-### ✍️ Create New Project
-# IMPORTANT: Use the @mediaId generated above. 
-# If you don't have an ID yet, set "mainThumbnailId" to null.
-POST {{baseUrl}}/projects
+### ============================================
+### 2. ADMIN — CREATE SECOND MEDIA (for section image)
+### ============================================
+# @name createMedia2
+POST {{mediaUrl}}
 Content-Type: application/json
 
 {
-  "title": "Professional Portfolio 2026",
-  "slug": "{{projectSlug}}",
-  "mainDescription": "An elite portfolio built with Drizzle ORM and UUIDs.",
-  "mainThumbnailId": "{{mediaId}}",
-  "status": "published",
-  "isFeatured": true
+  "fileName": "dashboard-preview.png",
+  "fileUrl": "https://res.cloudinary.com/demo/image/upload/v1234567890/dashboard.png",
+  "fileType": "image/png",
+  "fileSize": 89200,
+  "publicId": "portfolio/dashboard-preview"
 }
 
 
-### ✅ Get All Projects
-GET {{baseUrl}}/projects
+### ============================================
+### 3. ADMIN — CREATE (missing fileName, expect 400)
+### ============================================
+POST {{mediaUrl}}
 Content-Type: application/json
 
+{
+  "fileUrl": "https://res.cloudinary.com/demo/image/upload/v1234/sample.png"
+}
 
-### 🔗 Get Project By Slug
-GET {{baseUrl}}/projects/slug/{{projectSlug}}
+
+### ============================================
+### 4. ADMIN — CREATE (missing fileUrl, expect 400)
+### ============================================
+POST {{mediaUrl}}
 Content-Type: application/json
 
+{
+  "fileName": "orphan.png"
+}
 
-### 🆔 Get Project By ID
-GET {{baseUrl}}/projects/{{mediaId}}
+
+### ============================================
+### 5. ADMIN — CREATE (invalid URL, expect 400)
+### ============================================
+POST {{mediaUrl}}
 Content-Type: application/json
 
+{
+  "fileName": "bad.png",
+  "fileUrl": "not-a-valid-url"
+}
 
-// ==========================================
-// 3. CLEANUP
-// ==========================================
 
-### ❌ Delete Media Asset
-# Note: This will fail if a project is currently using this ID!
-DELETE {{baseUrl}}/media/{{mediaId}}
+### ============================================
+### 6. ADMIN — CREATE (negative fileSize, expect 400)
+### ============================================
+POST {{mediaUrl}}
 Content-Type: application/json
 
+{
+  "fileName": "bad-size.png",
+  "fileUrl": "https://res.cloudinary.com/demo/image/upload/v1/x.png",
+  "fileSize": -100
+}
 
-### ❌ Delete Project
-DELETE {{baseUrl}}/projects/{{mediaId}}
+
+### ============================================
+### 7. ADMIN — LIST ALL MEDIA (paginated)
+### GET /api/media?page=1&limit=10
+### Expected: 200 { data: [...], pagination: {...} }
+### ============================================
+GET {{mediaUrl}}?page=1&limit=10
+
+
+### ============================================
+### 8. ADMIN — LIST WITH SEARCH
+### GET /api/media?search=dashboard
+### ============================================
+GET {{mediaUrl}}?search=dashboard
+
+
+### ============================================
+### 9. ADMIN — LIST FILTERED BY TYPE
+### GET /api/media?fileType=image/png
+### ============================================
+GET {{mediaUrl}}?fileType=image/png
+
+
+### ============================================
+### 10. ADMIN — LIST SORTED BY SIZE DESC
+### GET /api/media?sortBy=fileSize&sortOrder=desc
+### ============================================
+GET {{mediaUrl}}?sortBy=fileSize&sortOrder=desc
+
+
+### ============================================
+### 11. ADMIN — LIST (invalid sortBy, expect 400)
+### ============================================
+GET {{mediaUrl}}?sortBy=garbage
+
+
+### ============================================
+### 12. PUBLIC — GET MEDIA BY ID
+### GET /api/media/:id
+### ============================================
+# @name getMedia
+GET {{mediaUrl}}/{{createMedia.response.body.$.data.id}}
+
+
+### ============================================
+### 13. PUBLIC — GET MEDIA BY ID (nonexistent, expect 404)
+### ============================================
+GET {{mediaUrl}}/00000000-0000-0000-0000-000000000000
+
+
+### ============================================
+### 14. PUBLIC — BULK GET BY IDS
+### GET /api/media/bulk?ids=id1,id2
+### ============================================
+GET {{mediaUrl}}/bulk?ids={{createMedia.response.body.$.data.id}},{{createMedia2.response.body.$.data.id}}
+
+
+### ============================================
+### 15. ADMIN — CHECK USAGE (before attaching — 0 usages)
+### GET /api/media/:id/usage
+### Expected: 200 { data: { totalUsages: 0, usage: {...} } }
+### ============================================
+GET {{mediaUrl}}/{{createMedia.response.body.$.data.id}}/usage
+
+
+### ============================================
+### 16. ADMIN — ATTACH MEDIA AS PROJECT THUMBNAIL
+### PUT /api/projects/:id
+### Expected: 200 with thumbnail in response ✅
+### ============================================
+PUT {{projectsUrl}}/{{projectId1}}
 Content-Type: application/json
+
+{
+  "mainThumbnailId": "{{createMedia.response.body.$.data.id}}"
+}
+
+
+### ============================================
+### 17. PUBLIC — GET PROJECT BY SLUG (verify thumbnail attached)
+### GET /api/projects/slug/portfolio-backend-api
+### Expected: 200 with thumbnail object
+### ============================================
+GET {{projectsUrl}}/slug/portfolio-backend-api
+
+
+### ============================================
+### 18. ADMIN — CHECK USAGE AGAIN (now 1 project uses it)
+### GET /api/media/:id/usage
+### Expected: 200 { data: { totalUsages: 1, usage: { projects: [{...}] } } }
+### ============================================
+GET {{mediaUrl}}/{{createMedia.response.body.$.data.id}}/usage
+
+
+### ============================================
+### 19. ADMIN — ATTACH SECOND MEDIA TO A PROJECT SECTION
+### PUT /api/projects/:id — add sections with mediaId
+### ============================================
+PUT {{projectsUrl}}/{{projectId1}}
+Content-Type: application/json
+
+{
+  "sections": [
+    {
+      "sectionTitle": "Dashboard Preview",
+      "explanation": "Here's what the admin dashboard looks like.",
+      "mediaId": "{{createMedia2.response.body.$.data.id}}",
+      "order": 0
+    }
+  ]
+}
+
+
+### ============================================
+### 20. PUBLIC — GET PROJECT BY SLUG (verify section media attached)
+### Expected: sections[0].media = { fileUrl, ... }
+### ============================================
+GET {{projectsUrl}}/slug/portfolio-backend-api
+
+
+### ============================================
+### 21. ADMIN — CHECK USAGE ON SECOND MEDIA (1 section uses it)
+### ============================================
+GET {{mediaUrl}}/{{createMedia2.response.body.$.data.id}}/usage
+
+
+### ============================================
+### 22. ADMIN — UPDATE MEDIA METADATA (rename file)
+### PUT /api/media/:id
+### Expected: 200 with new fileName
+### ============================================
+PUT {{mediaUrl}}/{{createMedia.response.body.$.data.id}}
+Content-Type: application/json
+
+{
+  "fileName": "portfolio-backend-v2-screenshot.png"
+}
+
+
+### ============================================
+### 23. ADMIN — UPDATE (unknown field, expect 400)
+### ============================================
+PUT {{mediaUrl}}/{{createMedia.response.body.$.data.id}}
+Content-Type: application/json
+
+{
+  "id": "hacked-id"
+}
+
+
+### ============================================
+### 24. ADMIN — UPDATE (nonexistent id, expect 404)
+### ============================================
+PUT {{mediaUrl}}/00000000-0000-0000-0000-000000000000
+Content-Type: application/json
+
+{
+  "fileName": "ghost.png"
+}
+
+
+### ============================================
+### 25. ADMIN — DELETE SECOND MEDIA (section media → null)
+### DELETE /api/media/:id
+### Expected: 204
+### ============================================
+DELETE {{mediaUrl}}/{{createMedia2.response.body.$.data.id}}
+
+
+### ============================================
+### 26. PUBLIC — GET PROJECT (verify section media → null)
+### ============================================
+GET {{projectsUrl}}/slug/portfolio-backend-api
+
+
+### ============================================
+### 27. ADMIN — DELETE FIRST MEDIA (project thumbnail → null)
+### Expected: 204
+### ============================================
+DELETE {{mediaUrl}}/{{createMedia.response.body.$.data.id}}
+
+
+### ============================================
+### 28. PUBLIC — GET PROJECT (verify thumbnail → null, project still alive)
+### ============================================
+GET {{projectsUrl}}/slug/portfolio-backend-api
+
+
+### ============================================
+### 29. ADMIN — GET MEDIA BY ID after delete (expect 404)
+### ============================================
+GET {{mediaUrl}}/{{createMedia.response.body.$.data.id}}
+
+
+### ============================================
+### 30. AUTH — LOGOUT
+### ============================================
+POST {{authUrl}}/logout

@@ -1,0 +1,260 @@
+### ============================================
+### ANALYTICS API — REST Client Tests
+### ============================================
+@baseUrl = http://localhost:5000/api
+@authUrl = {{baseUrl}}/auth
+@analyticsUrl = {{baseUrl}}/analytics
+
+@email = brayogakenye04@gmail.com
+@password = hunter2hunter2
+
+
+### ============================================
+### 0. LOGIN (must run first — stores session cookie)
+### ============================================
+# @name login
+POST {{authUrl}}/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+
+### ============================================
+### 1. PUBLIC — RECORD VIEW on "/"
+### POST /api/analytics/pageview
+### Expected: 200 { data: { path: "/", day: "...", count: 1 } }
+### ============================================
+POST {{analyticsUrl}}/pageview
+Content-Type: application/json
+
+{
+  "path": "/"
+}
+
+
+### ============================================
+### 2. PUBLIC — RECORD VIEW on "/" again (count → 2)
+### ============================================
+POST {{analyticsUrl}}/pageview
+Content-Type: application/json
+
+{
+  "path": "/"
+}
+
+
+### ============================================
+### 3. PUBLIC — RECORD VIEW on "/" third time (count → 3)
+### ============================================
+POST {{analyticsUrl}}/pageview
+Content-Type: application/json
+
+{
+  "path": "/"
+}
+
+
+### ============================================
+### 4. PUBLIC — RECORD VIEW on "/projects"
+### ============================================
+POST {{analyticsUrl}}/pageview
+Content-Type: application/json
+
+{
+  "path": "/projects"
+}
+
+
+### ============================================
+### 5. PUBLIC — RECORD VIEW on "/projects"
+### ============================================
+POST {{analyticsUrl}}/pageview
+Content-Type: application/json
+
+{
+  "path": "/projects"
+}
+
+
+### ============================================
+### 6. PUBLIC — RECORD VIEW on "/blog"
+### ============================================
+POST {{analyticsUrl}}/pageview
+Content-Type: application/json
+
+{
+  "path": "/blog"
+}
+
+
+### ============================================
+### 7. PUBLIC — RECORD VIEW with query string (should normalize to "/about")
+### ============================================
+POST {{analyticsUrl}}/pageview
+Content-Type: application/json
+
+{
+  "path": "/about?ref=twitter"
+}
+
+
+### ============================================
+### 8. PUBLIC — RECORD VIEW with trailing slash (should normalize to "/contact")
+### ============================================
+POST {{analyticsUrl}}/pageview
+Content-Type: application/json
+
+{
+  "path": "/contact/"
+}
+
+
+### ============================================
+### 9. PUBLIC — RECORD VIEW (missing path, expect 400)
+### ============================================
+POST {{analyticsUrl}}/pageview
+Content-Type: application/json
+
+{}
+
+
+### ============================================
+### 10. PUBLIC — RECORD VIEW (/api/* path, expect 400)
+### ============================================
+POST {{analyticsUrl}}/pageview
+Content-Type: application/json
+
+{
+  "path": "/api/projects"
+}
+
+
+### ============================================
+### 11. ADMIN — TODAY'S STATS
+### GET /api/analytics/today
+### Expected: total ≈ 8, topPage = "/" (count 3)
+### ============================================
+GET {{analyticsUrl}}/today
+
+
+### ============================================
+### 12. ADMIN — SUMMARY
+### GET /api/analytics/summary
+### Expected: totalViews ≈ 8, uniquePaths = 5, daysTracked = 1
+### ============================================
+GET {{analyticsUrl}}/summary
+
+
+### ============================================
+### 13. ADMIN — TOP PAGES (last 7 days)
+### GET /api/analytics/pages?days=7&limit=10
+### Expected: "/" (3), "/projects" (2), "/blog" (1), "/about" (1), "/contact" (1)
+### ============================================
+GET {{analyticsUrl}}/pages?days=7&limit=10
+
+
+### ============================================
+### 14. ADMIN — TOP PAGES (limit 3)
+### ============================================
+GET {{analyticsUrl}}/pages?days=7&limit=3
+
+
+### ============================================
+### 15. ADMIN — TOP PAGES (invalid days, expect 400)
+### ============================================
+GET {{analyticsUrl}}/pages?days=02
+
+
+### ============================================
+### 16. ADMIN — TOP PAGES (invalid limit, expect 400)
+### ============================================
+GET {{analyticsUrl}}/pages?limit=20
+
+
+### ============================================
+### 17. ADMIN — TIMESERIES (last 7 days)
+### GET /api/analytics/timeseries?days=7
+### Expected: 7 items, last one has count 8, others have count 0
+### ============================================
+GET {{analyticsUrl}}/timeseries?days=7
+
+
+### ============================================
+### 18. ADMIN — TIMESERIES (last 30 days)
+### ============================================
+GET {{analyticsUrl}}/timeseries?days=30
+
+
+### ============================================
+### 19. ADMIN — PATH STATS for "/"
+### GET /api/analytics/path?path=%2F&days=7
+### Expected: total=3, today=3
+### ============================================
+GET {{analyticsUrl}}/path?path=%2F&days=7
+
+
+### ============================================
+### 20. ADMIN — PATH STATS for "/projects"
+### ============================================
+GET {{analyticsUrl}}/path?path=%2Fprojects&days=7
+
+
+### ============================================
+### 21. ADMIN — PATH STATS (missing path, expect 400)
+### ============================================
+GET {{analyticsUrl}}/path?days=7
+
+
+### ============================================
+### 22. ADMIN — PATH STATS for nonexistent path
+### Expected: total=0, today=0, all zeros in timeseries
+### ============================================
+GET {{analyticsUrl}}/path?path=%2Fnonexistent&days=7
+
+
+### ============================================
+### 23. ADMIN — CLEANUP (invalid olderThanDays=10, expect 400)
+### ============================================
+DELETE {{analyticsUrl}}/cleanup?olderThanDays=10
+
+
+### ============================================
+### 24. ADMIN — CLEANUP (valid, should delete nothing since all data is from today)
+### DELETE /api/analytics/cleanup?olderThanDays=365
+### ============================================
+DELETE {{analyticsUrl}}/cleanup?olderThanDays=365
+
+
+### ============================================
+### 25. UNAUTHENTICATED — SUMMARY (no cookie)
+### To test: comment out cookies setting temporarily, or logout first
+### Expected: 401
+### ============================================
+# Comment the next line if you want to test 401
+GET {{analyticsUrl}}/summary
+
+
+### ============================================
+### 26. AUTH — LOGOUT
+### ============================================
+POST {{authUrl}}/logout
+
+
+### ============================================
+### 27. PUBLIC STILL WORKS AFTER LOGOUT — record view
+### ============================================
+POST {{analyticsUrl}}/pageview
+Content-Type: application/json
+
+{
+  "path": "/"
+}
+
+
+### ============================================
+### 28. ADMIN — SUMMARY AFTER LOGOUT (expect 401)
+### ============================================
+GET {{analyticsUrl}}/summary

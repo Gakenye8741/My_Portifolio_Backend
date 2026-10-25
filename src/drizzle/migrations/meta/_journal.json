@@ -22,6 +22,20 @@
       "when": 1768151871528,
       "tag": "0002_sharp_king_cobra",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792867888905,
+      "tag": "0003_tired_bullseye",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792871223840,
+      "tag": "0004_nebulous_nekra",
+      "breakpoints": true
     }
   ]
 }

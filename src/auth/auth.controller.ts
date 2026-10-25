@@ -1,89 +1,117 @@
-import { Request, Response } from "express";
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
-import { getUserByEmailService, registerUserService } from "./auth.service";
+import { Request, Response, NextFunction } from "express";
+import {
+  registerUserService,
+  loginUserService,
+  createSessionService,
+  deleteSessionService,
+  getSessionWithUserService,
+} from "./auth.service";
 
 // ✅ Register User
-export const registerUser = async (req: Request, res: Response) => {
+export const registerUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
-    const user = req.body;
+    const { fullName, email, password } = req.body as {
+      fullName?: string;
+      email?: string;
+      password?: string;
+    };
 
-    // Check for required fields based on your schema
-    if (!user.fullName || !user.password || !user.email) {
-      res.status(400).json({ error: "Full Name, Email, and Password are required!" });
+    if (!fullName || !email || !password) {
+      res.status(400).json({ error: "Full name, email, and password are required" });
       return;
     }
 
-    // Check if user already exists
-    const existingUser = await getUserByEmailService(user.email);
-    if (existingUser) {
-      res.status(400).json({ error: "Email is already registered!" });
-      return;
-    }
+    // service hashes the password internally, checks duplicates, returns safe user
+    const user = await registerUserService({ fullName, email, password });
 
-    // Hashing Password
-    const salt = bcrypt.genSaltSync(10);
-    user.password = bcrypt.hashSync(user.password, salt);
-
-    const message = await registerUserService(user);
-    res.status(201).json({ message });
-    
-  } catch (error: any) {
-    res.status(500).json({ error: error.message || "Error occurred during registration" });
+    res.status(201).json({ message: "User registered successfully", user });
+  } catch (err) {
+    next(err); // handled by central error middleware
   }
 };
 
-// ✅ Login Logic
-export const loginUser = async (req: Request, res: Response) => {
+// ✅ Login
+export const loginUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      res.status(400).json({ error: "Email and password are required!" });
-      return;
-    }
-
-    const existingUser = await getUserByEmailService(email);
-    if (!existingUser) {
-      res.status(404).json({ error: "User not found!" });
-      return;
-    }
-
-    // Compare passwords
-    const isMatch = bcrypt.compareSync(password, existingUser.password);
-    if (!isMatch) {
-      res.status(401).json({ error: "Invalid credentials!" });
-      return;
-    }
-
-    // generating token payload matching your DecodedToken type
-    const payload = {
-      id: existingUser.id,
-      fullName: existingUser.fullName,
-      email: existingUser.email,
-      role: existingUser.role, // "admin"
-      // exp is handled by jwt.sign option usually, but manually adding here:
-      exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24) // 24 hours
+    const { email, password } = req.body as {
+      email?: string;
+      password?: string;
     };
 
-    const secret = process.env.JWT_SECRET as string;
-    if (!secret) {
-      throw new Error("JWT_SECRET is not defined in environment variables");
+    if (!email || !password) {
+      res.status(400).json({ error: "Email and password are required" });
+      return;
     }
 
-    const token = jwt.sign(payload, secret);
+    // service verifies password against hash, throws generic error on failure
+    const user = await loginUserService({ email, password });
 
-    res.status(200).json({
-      token,
-      user: {
-        id: existingUser.id,
-        fullName: existingUser.fullName,
-        email: existingUser.email,
-        role: existingUser.role,
-        createdAt: existingUser.createdAt
-      }
+    // create a session row + set httpOnly cookie
+    const { sessionId, expiresAt } = await createSessionService(user.id, {
+      ipAddress: req.ip,
+      userAgent: req.headers["user-agent"],
     });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message || "Internal server error" });
+
+    res.cookie("session", sessionId, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      expires: expiresAt,
+      path: "/",
+    });
+
+    res.status(200).json({ user });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ✅ Logout
+export const logoutUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const sessionId = req.cookies?.session as string | undefined;
+    if (sessionId) await deleteSessionService(sessionId);
+
+    res.clearCookie("session", { path: "/" });
+    res.status(204).end();
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ✅ Me (current user)
+export const getCurrentUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const sessionId = req.cookies?.session as string | undefined;
+    if (!sessionId) {
+      res.status(401).json({ error: "Not authenticated" });
+      return;
+    }
+
+    const ctx = await getSessionWithUserService(sessionId);
+    if (!ctx) {
+      res.status(401).json({ error: "Session expired or invalid" });
+      return;
+    }
+
+    res.status(200).json({ user: ctx.user });
+  } catch (err) {
+    next(err);
   }
 };

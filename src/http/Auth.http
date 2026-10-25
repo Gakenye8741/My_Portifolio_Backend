@@ -1,33 +1,109 @@
-### Variables
-@baseUrl = http://localhost:5000/api
+### ============================================
+### AUTH API — REST Client Tests
+### ============================================
+@baseUrl = http://localhost:5000/api/auth
+@email = brayogakenye04@gmail.com
+@password = hunter2hunter2
+@fullName = Gakenye Ndiritu
 
-
-### ✅ Register a New User
-POST {{baseUrl}}/auth/register
+### ============================================
+### 1. REGISTER — happy path (expect 201)
+### ============================================
+POST {{baseUrl}}/register
 Content-Type: application/json
 
 {
-  "fullName": "Gakenye Ndiritu",
-  "email": "brayogakenye04@gmail.com",
-  "password": "Brian8741#",
-  "role": "admin"
+  "fullName": "{{fullName}}",
+  "email": "{{email}}",
+  "password": "{{password}}"
 }
 
-### ✅ Login User
+### ============================================
+### 2. REGISTER — missing fields (expect 400)
+### ============================================
+POST {{baseUrl}}/register
+Content-Type: application/json
+
+{
+  "email": "no-name@test.com"
+}
+
+### ============================================
+### 3. REGISTER — duplicate email (expect 409)
+### ============================================
+POST {{baseUrl}}/register
+Content-Type: application/json
+
+{
+  "fullName": "Someone Else",
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+### ============================================
+### 4. REGISTER — short password (expect 400)
+### ============================================
+POST {{baseUrl}}/register
+Content-Type: application/json
+
+{
+  "fullName": "Shorty",
+  "email": "shorty@test.com",
+  "password": "123"
+}
+
+### ============================================
+### 5. LOGIN — happy path (expect 200 + Set-Cookie)
+### ============================================
 # @name login
-POST {{baseUrl}}/auth/login
+POST {{baseUrl}}/login
 Content-Type: application/json
 
 {
-  "email": "admin@example.com",
-  "password": "SecurePassword123"
+  "email": "{{email}}",
+  "password": "{{password}}"
 }
 
-### Capture the token from the login response (Rest Client feature)
-@authToken = {{login.response.body.token}}
-
-### ✅ Test Protected Route (Example: Projects)
-# This uses the token captured automatically from the login request above
-GET {{baseUrl}}/projects
-Authorization: Bearer {{authToken}}
+### ============================================
+### 6. LOGIN — wrong password (expect 401)
+### ============================================
+POST {{baseUrl}}/login
 Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "wrongpassword"
+}
+
+### ============================================
+### 7. LOGIN — unknown email (expect 401)
+### ============================================
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "email": "ghost@test.com",
+  "password": "{{password}}"
+}
+
+### ============================================
+### 8. ME — with cookie (expect 200)
+### ============================================
+# @name me
+GET {{baseUrl}}/me
+
+### ============================================
+### 9. ME — without cookie (expect 401)
+### ============================================
+# To test this, first run request #10 (logout), then run this one.
+GET {{baseUrl}}/me
+
+### ============================================
+### 10. LOGOUT (expect 204)
+### ============================================
+POST {{baseUrl}}/logout
+
+### ============================================
+### 11. ME — after logout (expect 401)
+### ============================================
+GET {{baseUrl}}/me

@@ -1,0 +1,336 @@
+### ============================================
+### TESTIMONIALS API — REST Client Tests
+### ============================================
+@baseUrl = http://localhost:5000/api
+@authUrl = {{baseUrl}}/auth
+@testimonialsUrl = {{baseUrl}}/testimonials
+@mediaUrl = {{baseUrl}}/media
+
+@email = brayogakenye04@gmail.com
+@password = hunter2hunter2
+
+
+### ============================================
+### 0. LOGIN (must run first — stores session cookie)
+### ============================================
+# @name login
+POST {{authUrl}}/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+
+### ============================================
+### 1. PUBLIC — LIST PUBLISHED TESTIMONIALS (empty initially)
+### GET /api/testimonials
+### ============================================
+GET {{testimonialsUrl}}
+
+
+### ============================================
+### 2. ADMIN — CREATE TESTIMONIAL (published, with rating)
+### POST /api/testimonials
+### Expected: 201 { data: { id, authorName, isPublished, ... } }
+### ============================================
+# @name createTestimonial
+POST {{testimonialsUrl}}
+Content-Type: application/json
+
+{
+  "authorName": "John Smith",
+  "authorRole": "CTO",
+  "company": "Acme Corp",
+  "content": "Gakenye delivered production-grade backend work ahead of schedule. His understanding of database design, auth flows, and deployment is exceptional. I'd hire him again without hesitation.",
+  "rating": 5,
+  "sourceUrl": "https://linkedin.com/in/johnsmith",
+  "isPublished": true
+}
+
+
+### ============================================
+### 3. ADMIN — CREATE TESTIMONIAL 2 (unpublished draft)
+### ============================================
+# @name createTestimonial2
+POST {{testimonialsUrl}}
+Content-Type: application/json
+
+{
+  "authorName": "Sarah Johnson",
+  "authorRole": "Product Manager",
+  "company": "TechStart Inc",
+  "content": "Working with Gakenye was seamless. He translated our vague requirements into a clean, well-tested API that our frontend team loved.",
+  "rating": 5,
+  "isPublished": false
+}
+
+
+### ============================================
+### 4. ADMIN — CREATE TESTIMONIAL 3 (no rating, no role)
+### ============================================
+# @name createTestimonial3
+POST {{testimonialsUrl}}
+Content-Type: application/json
+
+{
+  "authorName": "Mike Chen",
+  "content": "Gakenye is one of the most detail-oriented backend developers I've worked with. His documentation and code quality are top-tier.",
+  "isPublished": true
+}
+
+
+### ============================================
+### 5. ADMIN — CREATE (missing authorName, expect 400)
+### ============================================
+POST {{testimonialsUrl}}
+Content-Type: application/json
+
+{
+  "content": "Great work!"
+}
+
+
+### ============================================
+### 6. ADMIN — CREATE (missing content, expect 400)
+### ============================================
+POST {{testimonialsUrl}}
+Content-Type: application/json
+
+{
+  "authorName": "Someone"
+}
+
+
+### ============================================
+### 7. ADMIN — CREATE (invalid rating 6, expect 400)
+### ============================================
+POST {{testimonialsUrl}}
+Content-Type: application/json
+
+{
+  "authorName": "Bad Rating",
+  "content": "Content",
+  "rating": 6
+}
+
+
+### ============================================
+### 8. ADMIN — CREATE (invalid sourceUrl, expect 400)
+### ============================================
+POST {{testimonialsUrl}}
+Content-Type: application/json
+
+{
+  "authorName": "Bad URL",
+  "content": "Content",
+  "sourceUrl": "not-a-url"
+}
+
+
+### ============================================
+### 9. ADMIN — CREATE (nonexistent avatar mediaId, expect 400)
+### ============================================
+POST {{testimonialsUrl}}
+Content-Type: application/json
+
+{
+  "authorName": "Bad Avatar",
+  "content": "Content",
+  "authorAvatarId": "00000000-0000-0000-0000-000000000000"
+}
+
+
+### ============================================
+### 10. PUBLIC — LIST (should show 2 published only)
+### ============================================
+GET {{testimonialsUrl}}
+
+
+### ============================================
+### 11. ADMIN — LIST ALL (should show 3, including draft)
+### GET /api/testimonials/admin
+### ============================================
+GET {{testimonialsUrl}}/admin
+
+
+### ============================================
+### 12. ADMIN — LIST ALL FILTERED isPublished=false
+### ============================================
+GET {{testimonialsUrl}}/admin?isPublished=false
+
+
+### ============================================
+### 13. ADMIN — LIST FILTERED minRating=5
+### ============================================
+GET {{testimonialsUrl}}/admin?minRating=5
+
+
+### ============================================
+### 14. ADMIN — LIST SEARCH "acme"
+### ============================================
+GET {{testimonialsUrl}}/admin?search=acme
+
+
+### ============================================
+### 15. ADMIN — LIST SORT BY RATING DESC
+### ============================================
+GET {{testimonialsUrl}}/admin?sortBy=rating&sortOrder=desc
+
+
+### ============================================
+### 16. ADMIN — LIST SORT BY AUTHORNAME ASC
+### ============================================
+GET {{testimonialsUrl}}/admin?sortBy=authorName&sortOrder=asc
+
+
+### ============================================
+### 17. ADMIN — LIST INVALID minRating (expect 400)
+### ============================================
+GET {{testimonialsUrl}}/admin?minRating=10
+
+
+### ============================================
+### 18. ADMIN — STATS
+### GET /api/testimonials/admin/stats
+### Expected: { total: 3, published: 2, unpublished: 1, avgRating: 5 }
+### ============================================
+GET {{testimonialsUrl}}/admin/stats
+
+
+### ============================================
+### 19. PUBLIC — GET BY ID (published, expect 200)
+### ============================================
+GET {{testimonialsUrl}}/{{createTestimonial.response.body.$.data.id}}
+
+
+### ============================================
+### 20. PUBLIC — GET BY ID (unpublished draft, expect 404)
+### ============================================
+GET {{testimonialsUrl}}/{{createTestimonial2.response.body.$.data.id}}
+
+
+### ============================================
+### 21. PUBLIC — GET BY ID (nonexistent, expect 404)
+### ============================================
+GET {{testimonialsUrl}}/00000000-0000-0000-0000-000000000000
+
+
+### ============================================
+### 22. ADMIN — GET BY ID (unpublished — admin can see)
+### ============================================
+GET {{testimonialsUrl}}/{{createTestimonial2.response.body.$.data.id}}
+
+
+### ============================================
+### 23. ADMIN — UPDATE TESTIMONIAL
+### PUT /api/testimonials/:id
+### ============================================
+PUT {{testimonialsUrl}}/{{createTestimonial.response.body.$.data.id}}
+Content-Type: application/json
+
+{
+  "authorRole": "Chief Technology Officer",
+  "rating": 5,
+  "content": "Gakenye delivered production-grade backend work ahead of schedule. His understanding of database design, auth flows, and deployment is exceptional. I'd hire him again without hesitation. Truly a 10x engineer."
+}
+
+
+### ============================================
+### 24. ADMIN — UPDATE (invalid rating, expect 400)
+### ============================================
+PUT {{testimonialsUrl}}/{{createTestimonial.response.body.$.data.id}}
+Content-Type: application/json
+
+{
+  "rating": 0
+}
+
+
+### ============================================
+### 25. ADMIN — UPDATE (nonexistent id, expect 404)
+### ============================================
+PUT {{testimonialsUrl}}/00000000-0000-0000-0000-000000000000
+Content-Type: application/json
+
+{
+  "content": "Ghost"
+}
+
+
+### ============================================
+### 26. ADMIN — PUBLISH THE DRAFT (toggle isPublished: false → true)
+### PATCH /api/testimonials/:id/publish
+### ============================================
+PATCH {{testimonialsUrl}}/{{createTestimonial2.response.body.$.data.id}}/publish
+
+
+### ============================================
+### 27. PUBLIC — LIST (should now show 3 published)
+### ============================================
+GET {{testimonialsUrl}}
+
+
+### ============================================
+### 28. PUBLIC — GET DRAFT-BY-ID (now published → 200)
+### ============================================
+GET {{testimonialsUrl}}/{{createTestimonial2.response.body.$.data.id}}
+
+
+### ============================================
+### 29. ADMIN — UNPUBLISH (toggle back to draft)
+### ============================================
+PATCH {{testimonialsUrl}}/{{createTestimonial2.response.body.$.data.id}}/publish
+
+
+### ============================================
+### 30. PUBLIC — LIST (should be back to 2 published)
+### ============================================
+GET {{testimonialsUrl}}
+
+
+### ============================================
+### 31. ADMIN — STATS AFTER TOGGLE
+### Expected: total: 3, published: 2, unpublished: 1
+### ============================================
+GET {{testimonialsUrl}}/admin/stats
+
+
+### ============================================
+### 32. ADMIN — DELETE TESTIMONIAL 3
+### DELETE /api/testimonials/:id
+### Expected: 204
+### ============================================
+DELETE {{testimonialsUrl}}/{{createTestimonial3.response.body.$.data.id}}
+
+
+### ============================================
+### 33. PUBLIC — VERIFY GONE (404)
+### ============================================
+GET {{testimonialsUrl}}/{{createTestimonial3.response.body.$.data.id}}
+
+
+### ============================================
+### 34. ADMIN — DELETE AGAIN (expect 404)
+### ============================================
+DELETE {{testimonialsUrl}}/{{createTestimonial3.response.body.$.data.id}}
+
+
+### ============================================
+### 35. ADMIN — STATS AFTER DELETE
+### Expected: total: 2, published: 1, unpublished: 1
+### ============================================
+GET {{testimonialsUrl}}/admin/stats
+
+
+### ============================================
+### 36. ADMIN — CLEANUP: DELETE TESTIMONIAL 2
+### ============================================
+DELETE {{testimonialsUrl}}/{{createTestimonial2.response.body.$.data.id}}
+
+
+### ============================================
+### 37. AUTH — LOGOUT
+### ============================================
+POST {{authUrl}}/logout

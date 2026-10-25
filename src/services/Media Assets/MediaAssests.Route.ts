@@ -1,10 +1,10 @@
 import { Router } from "express";
-import { 
-  createMedia, 
-  getAllMedia, 
-  getMediaById, 
-  updateMedia, 
-  deleteMedia 
+import {
+  createMedia,
+  getAllMedia,
+  getMediaById,
+  updateMedia,
+  deleteMedia,
 } from "./MediaAssests.controller";
 
 export const MediaRoute = Router();

@@ -1,0 +1,346 @@
+### ============================================
+### TECHNOLOGIES API — REST Client Tests
+### ============================================
+@baseUrl = http://localhost:5000/api
+@authUrl = {{baseUrl}}/auth
+@techUrl = {{baseUrl}}/technologies
+@projectsUrl = {{baseUrl}}/projects
+
+@email = brayogakenye04@gmail.com
+@password = hunter2hunter2
+
+# existing project to test tech linking
+@projectId = 0345f081-f78b-4e51-83ad-c87ca043a191
+
+
+### ============================================
+### 0. LOGIN (must run first — stores session cookie)
+### ============================================
+# @name login
+POST {{authUrl}}/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+
+### ============================================
+### 1. PUBLIC — LIST TECHNOLOGIES (should show seeded techs)
+### GET /api/technologies
+### ============================================
+GET {{techUrl}}
+
+
+### ============================================
+### 2. PUBLIC — LIST FILTERED BY CATEGORY=frontend
+### ============================================
+GET {{techUrl}}?category=frontend
+
+
+### ============================================
+### 3. PUBLIC — LIST FILTERED BY CATEGORY=backend
+### ============================================
+GET {{techUrl}}?category=backend
+
+
+### ============================================
+### 4. PUBLIC — LIST FILTERED BY CATEGORY=database
+### ============================================
+GET {{techUrl}}?category=database
+
+
+### ============================================
+### 5. PUBLIC — SEARCH "postgres"
+### ============================================
+GET {{techUrl}}?search=postgres
+
+
+### ============================================
+### 6. PUBLIC — SORT BY CATEGORY ASC
+### ============================================
+GET {{techUrl}}?sortBy=category&sortOrder=asc
+
+
+### ============================================
+### 7. PUBLIC — LIST (invalid category, expect 400)
+### ============================================
+GET {{techUrl}}?category=garbage
+
+
+### ============================================
+### 8. PUBLIC — GROUPED BY CATEGORY
+### GET /api/technologies/by-category
+### Expected: { data: { frontend: [...], backend: [...], ... } }
+### ============================================
+GET {{techUrl}}/by-category
+
+
+### ============================================
+### 9. ADMIN — CREATE (happy path)
+### POST /api/technologies
+### Expected: 201 { data: { id, name, category, iconName } }
+### ============================================
+# @name createTech
+POST {{techUrl}}
+Content-Type: application/json
+
+{
+  "name": "Svelte",
+  "category": "frontend",
+  "iconName": "Flame"
+}
+
+
+### ============================================
+### 10. ADMIN — CREATE SECOND
+### ============================================
+# @name createTech2
+POST {{techUrl}}
+Content-Type: application/json
+
+{
+  "name": "Bun",
+  "category": "backend",
+  "iconName": "Zap"
+}
+
+
+### ============================================
+### 11. ADMIN — CREATE (duplicate name, expect 400)
+### ============================================
+POST {{techUrl}}
+Content-Type: application/json
+
+{
+  "name": "React",
+  "category": "frontend"
+}
+
+
+### ============================================
+### 12. ADMIN — CREATE (duplicate case-insensitive, expect 400)
+### ============================================
+POST {{techUrl}}
+Content-Type: application/json
+
+{
+  "name": "react",
+  "category": "frontend"
+}
+
+
+### ============================================
+### 13. ADMIN — CREATE (missing name, expect 400)
+### ============================================
+POST {{techUrl}}
+Content-Type: application/json
+
+{
+  "category": "frontend"
+}
+
+
+### ============================================
+### 14. ADMIN — CREATE (missing category, expect 400)
+### ============================================
+POST {{techUrl}}
+Content-Type: application/json
+
+{
+  "name": "SomeTech"
+}
+
+
+### ============================================
+### 15. ADMIN — CREATE (invalid category, expect 400)
+### ============================================
+POST {{techUrl}}
+Content-Type: application/json
+
+{
+  "name": "BadTech",
+  "category": "garbage"
+}
+
+
+### ============================================
+### 16. ADMIN — CREATE (name too long, expect 400)
+### ============================================
+POST {{techUrl}}
+Content-Type: application/json
+
+{
+  "name": "ThisTechnologyNameIsWayTooLongAndShouldBeRejectedByTheValidationLayer",
+  "category": "frontend"
+}
+
+
+### ============================================
+### 17. PUBLIC — GET BY ID (use one from create)
+### GET /api/technologies/:id
+### ============================================
+GET {{techUrl}}/{{createTech.response.body.$.data.id}}
+
+
+### ============================================
+### 18. PUBLIC — GET BY ID (nonexistent, expect 404)
+### ============================================
+GET {{techUrl}}/00000000-0000-0000-0000-000000000000
+
+
+### ============================================
+### 19. PUBLIC — BULK GET
+### GET /api/technologies/bulk?ids=id1,id2
+### ============================================
+GET {{techUrl}}/bulk?ids={{createTech.response.body.$.data.id}},{{createTech2.response.body.$.data.id}}
+
+
+### ============================================
+### 20. PUBLIC — BULK GET (no ids, expect 400)
+### ============================================
+GET {{techUrl}}/bulk
+
+
+### ============================================
+### 21. ADMIN — USAGE CHECK (new tech, 0 usages)
+### GET /api/technologies/:id/usage
+### Expected: { data: { usage: { projects: 0, services: 0, hasSkill: false } } }
+### ============================================
+GET {{techUrl}}/{{createTech.response.body.$.data.id}}/usage
+
+
+### ============================================
+### 22. ADMIN — UPDATE (rename)
+### PUT /api/technologies/:id
+### ============================================
+PUT {{techUrl}}/{{createTech.response.body.$.data.id}}
+Content-Type: application/json
+
+{
+  "name": "Svelte 5"
+}
+
+
+### ============================================
+### 23. ADMIN — UPDATE (change category)
+### ============================================
+PUT {{techUrl}}/{{createTech.response.body.$.data.id}}
+Content-Type: application/json
+
+{
+  "category": "frontend",
+  "iconName": "Flame"
+}
+
+
+### ============================================
+### 24. ADMIN — UPDATE (invalid category, expect 400)
+### ============================================
+PUT {{techUrl}}/{{createTech.response.body.$.data.id}}
+Content-Type: application/json
+
+{
+  "category": "garbage"
+}
+
+
+### ============================================
+### 25. ADMIN — UPDATE (duplicate name, expect 400)
+### ============================================
+PUT {{techUrl}}/{{createTech.response.body.$.data.id}}
+Content-Type: application/json
+
+{
+  "name": "React"
+}
+
+
+### ============================================
+### 26. ADMIN — UPDATE (nonexistent id, expect 404)
+### ============================================
+PUT {{techUrl}}/00000000-0000-0000-0000-000000000000
+Content-Type: application/json
+
+{
+  "name": "Ghost"
+}
+
+
+### ============================================
+### 27. ADMIN — LINK TECHNOLOGIES TO A PROJECT
+### PUT /api/projects/:id with techIds
+### (Uses existing project — requires it to exist)
+### ============================================
+PUT {{projectsUrl}}/{{projectId}}
+Content-Type: application/json
+
+{
+  "techIds": [
+    "{{createTech.response.body.$.data.id}}",
+    "{{createTech2.response.body.$.data.id}}"
+  ]
+}
+
+
+### ============================================
+### 28. PUBLIC — VERIFY PROJECT NOW SHOWS TECHS
+### GET /api/projects/slug/:slug
+### Expected: data.techs = [{ technology: { name: "Svelte 5" } }, ...]
+### ============================================
+GET {{projectsUrl}}/slug/portfolio-backend-api
+
+
+### ============================================
+### 29. ADMIN — USAGE CHECK AFTER LINK (now 1 project)
+### Expected: { usage: { projects: 1, services: 0, hasSkill: false } }
+### ============================================
+GET {{techUrl}}/{{createTech.response.body.$.data.id}}/usage
+
+
+### ============================================
+### 30. ADMIN — DELETE SECOND TECH (Bun)
+### DELETE /api/technologies/:id
+### Expected: 204
+### ============================================
+DELETE {{techUrl}}/{{createTech2.response.body.$.data.id}}
+
+
+### ============================================
+### 31. PUBLIC — VERIFY GONE (404)
+### ============================================
+GET {{techUrl}}/{{createTech2.response.body.$.data.id}}
+
+
+### ============================================
+### 32. PUBLIC — PROJECT STILL SHOWS FIRST TECH
+### GET /api/projects/slug/:slug
+### Expected: only Svelte 5 remains in techs (Bun was cascade-deleted)
+### ============================================
+GET {{projectsUrl}}/slug/portfolio-backend-api
+
+
+### ============================================
+### 33. ADMIN — DELETE FIRST TECH (cascade from project too)
+### ============================================
+DELETE {{techUrl}}/{{createTech.response.body.$.data.id}}
+
+
+### ============================================
+### 34. PUBLIC — PROJECT NOW HAS EMPTY TECHS
+### Expected: data.techs = []
+### ============================================
+GET {{projectsUrl}}/slug/portfolio-backend-api
+
+
+### ============================================
+### 35. ADMIN — DELETE AGAIN (expect 404)
+### ============================================
+DELETE {{techUrl}}/{{createTech.response.body.$.data.id}}
+
+
+### ============================================
+### 36. AUTH — LOGOUT
+### ============================================
+POST {{authUrl}}/logout

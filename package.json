@@ -11,24 +11,26 @@
     "migrate": "tsx src/drizzle/migrate.ts",
     "studio": "drizzle-kit studio",
     "push": "drizzle-kit generate && drizzle-kit push",
-    "seed": "tsx src/drizzle/seed.ts",
-    "postinstall": "tsc"
+    "seed": "tsx src/drizzle/seed.ts"
   },
   "keywords": [],
   "author": "Gakenye Ndiritu",
   "license": "ISC",
-  "packageManager": "pnpm@10.10.0",
+  "packageManager": "pnpm@12.15.0",
   "dependencies": {
     "@neondatabase/serverless": "^1.0.1",
     "@types/bcrypt": "^5.0.2",
     "@types/jsonwebtoken": "^9.0.10",
     "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.3",
     "body-parser": "^2.2.0",
     "cloudinary": "^2.7.0",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "drizzle-kit": "^0.31.1",
     "drizzle-orm": "^0.43.1",
+    "express-rate-limit": "^8.7.1",
     "file-saver": "^2.0.5",
     "jsonwebtoken": "^9.0.2",
     "jspdf": "^3.0.1",
@@ -45,6 +47,8 @@
     "zod": "^3.25.56"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^3.0.0",
+    "@types/cookie-parser": "^1.4.10",
     "@types/cors": "2.8.19",
     "@types/express": "^5.0.2",
     "@types/file-saver": "^2.0.7",

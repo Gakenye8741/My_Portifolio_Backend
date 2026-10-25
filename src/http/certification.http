@@ -1,0 +1,257 @@
+### ============================================
+### CERTIFICATIONS API — REST Client Tests
+### ============================================
+@baseUrl = http://localhost:5000/api
+@authUrl = {{baseUrl}}/auth
+@certUrl = {{baseUrl}}/certifications
+
+@email = brayogakenye04@gmail.com
+@password = hunter2hunter2
+
+
+### ============================================
+### 0. LOGIN (must run first — stores session cookie)
+### ============================================
+# @name login
+POST {{authUrl}}/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+
+### ============================================
+### 1. PUBLIC — LIST (empty initially)
+### ============================================
+GET {{certUrl}}
+
+
+### ============================================
+### 2. ADMIN — CREATE CERTIFICATION
+### POST /api/certifications
+### Expected: 201 { data: { id, name, issuer, badge: null } }
+### ============================================
+# @name createCert1
+POST {{certUrl}}
+Content-Type: application/json
+
+{
+  "name": "AWS Certified Solutions Architect – Associate",
+  "issuer": "Amazon Web Services"
+}
+
+
+### ============================================
+### 3. ADMIN — CREATE SECOND
+### ============================================
+# @name createCert2
+POST {{certUrl}}
+Content-Type: application/json
+
+{
+  "name": "Meta Backend Developer Professional Certificate",
+  "issuer": "Meta (Facebook)"
+}
+
+
+### ============================================
+### 4. ADMIN — CREATE THIRD
+### ============================================
+# @name createCert3
+POST {{certUrl}}
+Content-Type: application/json
+
+{
+  "name": "Full Stack Open 2024",
+  "issuer": "University of Helsinki"
+}
+
+
+### ============================================
+### 5. ADMIN — CREATE (missing name, expect 400)
+### ============================================
+POST {{certUrl}}
+Content-Type: application/json
+
+{
+  "issuer": "Some Issuer"
+}
+
+
+### ============================================
+### 6. ADMIN — CREATE (missing issuer, expect 400)
+### ============================================
+POST {{certUrl}}
+Content-Type: application/json
+
+{
+  "name": "Some Cert"
+}
+
+
+### ============================================
+### 7. ADMIN — CREATE (name too long, expect 400)
+### ============================================
+POST {{certUrl}}
+Content-Type: application/json
+
+{
+  "name": "This certification name is extremely long and way beyond the maximum allowed length of two hundred and fifty five characters that the database schema enforces for this column. It should definitely be rejected by the validation layer before touching the database, and I am proving it with this absurdly long string here.",
+  "issuer": "Test"
+}
+
+
+### ============================================
+### 8. ADMIN — CREATE (nonexistent badgeMediaId, expect 400)
+### ============================================
+POST {{certUrl}}
+Content-Type: application/json
+
+{
+  "name": "Cert With Bad Badge",
+  "issuer": "Test",
+  "badgeMediaId": "00000000-0000-0000-0000-000000000000"
+}
+
+
+### ============================================
+### 9. PUBLIC — LIST (should show 3 certs)
+### ============================================
+GET {{certUrl}}
+
+
+### ============================================
+### 10. PUBLIC — LIST FILTERED issuer=meta
+### ============================================
+GET {{certUrl}}?issuer=meta
+
+
+### ============================================
+### 11. PUBLIC — SEARCH "aws"
+### ============================================
+GET {{certUrl}}?search=aws
+
+
+### ============================================
+### 12. PUBLIC — SORT BY NAME ASC
+### ============================================
+GET {{certUrl}}?sortBy=name&sortOrder=asc
+
+
+### ============================================
+### 13. PUBLIC — SORT BY ISSUER DESC
+### ============================================
+GET {{certUrl}}?sortBy=issuer&sortOrder=desc
+
+
+### ============================================
+### 14. PUBLIC — INVALID sortBy (expect 400)
+### ============================================
+GET {{certUrl}}?sortBy=garbage
+
+
+### ============================================
+### 15. PUBLIC — GET BY ID
+### ============================================
+GET {{certUrl}}/{{createCert1.response.body.$.data.id}}
+
+
+### ============================================
+### 16. PUBLIC — GET BY ID (nonexistent, expect 404)
+### ============================================
+GET {{certUrl}}/00000000-0000-0000-0000-000000000000
+
+
+### ============================================
+### 17. ADMIN — STATS
+### GET /api/certifications/admin/stats
+### Expected: { total: 3, withBadge: 0, withoutBadge: 3, issuers: [...] }
+### ============================================
+GET {{certUrl}}/admin/stats
+
+
+### ============================================
+### 18. ADMIN — UPDATE (rename)
+### PUT /api/certifications/:id
+### ============================================
+PUT {{certUrl}}/{{createCert1.response.body.$.data.id}}
+Content-Type: application/json
+
+{
+  "name": "AWS Certified Solutions Architect – Professional"
+}
+
+
+### ============================================
+### 19. ADMIN — UPDATE (both fields)
+### ============================================
+PUT {{certUrl}}/{{createCert3.response.body.$.data.id}}
+Content-Type: application/json
+
+{
+  "name": "Full Stack Open 2025",
+  "issuer": "University of Helsinki"
+}
+
+
+### ============================================
+### 20. ADMIN — UPDATE (invalid name, expect 400)
+### ============================================
+PUT {{certUrl}}/{{createCert1.response.body.$.data.id}}
+Content-Type: application/json
+
+{
+  "name": ""
+}
+
+
+### ============================================
+### 21. ADMIN — UPDATE (nonexistent id, expect 404)
+### ============================================
+PUT {{certUrl}}/00000000-0000-0000-0000-000000000000
+Content-Type: application/json
+
+{
+  "name": "Ghost"
+}
+
+
+### ============================================
+### 22. ADMIN — DELETE CERT 3
+### DELETE /api/certifications/:id
+### Expected: 204
+### ============================================
+DELETE {{certUrl}}/{{createCert3.response.body.$.data.id}}
+
+
+### ============================================
+### 23. PUBLIC — VERIFY GONE (404)
+### ============================================
+GET {{certUrl}}/{{createCert3.response.body.$.data.id}}
+
+
+### ============================================
+### 24. ADMIN — DELETE AGAIN (expect 404)
+### ============================================
+DELETE {{certUrl}}/{{createCert3.response.body.$.data.id}}
+
+
+### ============================================
+### 25. ADMIN — STATS AFTER DELETE
+### Expected: total: 2, withBadge: 0, withoutBadge: 2
+### ============================================
+GET {{certUrl}}/admin/stats
+
+
+### ============================================
+### 26. PUBLIC — FINAL LIST
+### ============================================
+GET {{certUrl}}
+
+
+### ============================================
+### 27. AUTH — LOGOUT
+### ============================================
+POST {{authUrl}}/logout
